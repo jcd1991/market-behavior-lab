@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "market-behavior-lab"
+version = "0.1.0"
+description = "Experimental research strategies for studying changing market behavior with Freqtrade."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "jcd1991" }]
+dependencies = []
+
+# The public repository is loaded by Freqtrade from user_data/strategies.  It
+# is not intended to install research/ or user_data/ as Python packages.
+[tool.setuptools]
+packages = []
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8,<9",
+  "numpy>=1.26",
+  "pandas>=2.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_acceptance_tests.py"]
