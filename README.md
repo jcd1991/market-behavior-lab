@@ -179,6 +179,11 @@ Run a backtest:
   --export trades
 ```
 
+For the spot validation lane, use `examples/config.backtest.binanceus.spot.example.json`
+with `PortfolioAllocatorSpot` and canonical spot pairs such as `BTC/USDT`.
+Futures-only strategies and fields such as funding, mark price, and index price
+are not silently substituted into this spot path.
+
 Run a credential-free dry-run:
 
 ```bash

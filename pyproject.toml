@@ -23,6 +23,10 @@ dev = [
   "numpy>=1.26",
   "pandas>=2.0",
 ]
+export = [
+  "pandas>=2.0",
+  "pyarrow>=14",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

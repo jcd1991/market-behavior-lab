@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 
 from freqtrade.optimize.hyperopt_tools import HyperoptTools
+from market_context import parse_pair
 
 
 def base_asset(pair: str) -> str:
@@ -15,13 +16,10 @@ def base_asset(pair: str) -> str:
 
 
 def quote_asset(pair: str) -> str:
-    token = str(pair or "").strip().upper()
-    if "/" not in token:
+    try:
+        return parse_pair(pair).quote
+    except ValueError:
         return ""
-    quote = token.split("/", 1)[1].strip()
-    if ":" in quote:
-        quote = quote.split(":", 1)[0].strip()
-    return quote
 
 
 def asset_set_from_pairs(pairs: set[str] | list[str] | tuple[str, ...]) -> set[str]:

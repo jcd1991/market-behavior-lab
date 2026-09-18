@@ -17,6 +17,7 @@ from freqtrade.strategy import (
     stoploss_from_open,
 )
 from pandas import DataFrame
+from market_context import derivative_candle_types, reference_pair
 
 
 logger = logging.getLogger(__name__)
@@ -171,6 +172,8 @@ class SlowResidualRotation(IStrategy):
 
     def __init__(self, config: dict[str, Any]) -> None:
         super().__init__(config)
+        self._ref_btc = reference_pair("BTC", config)
+        self._ref_eth = reference_pair("ETH", config)
         self._srr_pair_cache: dict[str, pd.DataFrame] = {}
         self._srr_cache_signature: tuple[Any, ...] | None = None
         self._srr_hwm: dict[str, float] = {}
@@ -179,12 +182,11 @@ class SlowResidualRotation(IStrategy):
         if not bool(self.buy_srr_enabled.value):
             return []
         result: list[tuple[str, str] | tuple[str, str, str]] = []
-        pairset = set(self._srr_pairs()) | {_REF_BTC, _REF_ETH}
+        pairset = set(self._srr_pairs()) | {self._ref_btc, self._ref_eth}
         for pair in sorted(pairset):
             result.append((pair, "1d"))
-            result.append((pair, self.timeframe, "mark"))
-            result.append((pair, self.timeframe, "index"))
-            result.append((pair, "1h", "funding_rate"))
+            for candle_type in derivative_candle_types(self.config):
+                result.append((pair, self.timeframe if candle_type != "funding_rate" else "1h", candle_type))
         return result
 
     def _srr_pairs(self) -> list[str]:
@@ -425,9 +427,9 @@ class SlowResidualRotation(IStrategy):
             self._srr_cache_signature = signature
             return
 
-        btc_df = self._price_frame(_REF_BTC, self.timeframe)
-        eth_df = self._price_frame(_REF_ETH, self.timeframe)
-        btc_1d_df = self._price_frame(_REF_BTC, "1d")
+        btc_df = self._price_frame(self._ref_btc, self.timeframe)
+        eth_df = self._price_frame(self._ref_eth, self.timeframe)
+        btc_1d_df = self._price_frame(self._ref_btc, "1d")
         if btc_df is None or eth_df is None or btc_1d_df is None:
             self._srr_pair_cache = {}
             self._srr_cache_signature = signature
@@ -452,7 +454,7 @@ class SlowResidualRotation(IStrategy):
         btc_ema1d_fast = ta.EMA(btc_1d_df, timeperiod=ema1d_fast_len)
         btc_ema1d_slow = ta.EMA(btc_1d_df, timeperiod=ema1d_slow_len)
         btc_1d_close = pd.to_numeric(btc_1d_df.get("close"), errors="coerce")
-        eth_1d_df = self._price_frame(_REF_ETH, "1d")
+        eth_1d_df = self._price_frame(self._ref_eth, "1d")
         eth_1d_close = pd.to_numeric(eth_1d_df.get("close"), errors="coerce") if eth_1d_df is not None else None
         btc_1d_bias = pd.Series(
             ((btc_1d_close > pd.to_numeric(btc_ema1d_fast, errors="coerce"))

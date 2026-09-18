@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schema.freqtrade.io/schema.json",
+  "strategy": "PortfolioAllocatorSpot",
+  "trading_mode": "spot",
+  "dry_run": true,
+  "dry_run_wallet": 1000,
+  "max_open_trades": 2,
+  "stake_currency": "USDT",
+  "stake_amount": 20,
+  "fiat_display_currency": "USD",
+  "timeframe": "4h",
+  "entry_pricing": {"price_side": "other", "use_order_book": false},
+  "exit_pricing": {"price_side": "other", "use_order_book": false},
+  "order_types": {"entry": "market", "exit": "market", "stoploss": "market", "stoploss_on_exchange": false},
+  "unfilledtimeout": {"entry": 10, "exit": 10, "unit": "minutes"},
+  "exchange": {
+    "name": "binanceus",
+    "key": "",
+    "secret": "",
+    "password": "",
+    "pair_whitelist": ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT", "DOGE/USDT"],
+    "pair_blacklist": []
+  },
+  "pairlists": [{"method": "StaticPairList"}],
+  "api_server": {
+    "enabled": false,
+    "listen_ip_address": "127.0.0.1",
+    "listen_port": 8080,
+    "username": "",
+    "password": "",
+    "jwt_secret_key": "disabled-public-example-secret-please-change"
+  },
+  "telegram": {"enabled": false, "token": "", "chat_id": ""}
+}
