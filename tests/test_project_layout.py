@@ -10,9 +10,12 @@ def test_public_layout_is_present() -> None:
         ROOT / "LICENSE",
         ROOT / "examples/config.backtest.example.json",
         ROOT / "examples/config.dry-run.example.json",
+        ROOT / "examples/config.backtest.binanceus.spot.example.json",
         ROOT / "user_data/strategies/RegimeRouted.py",
         ROOT / "user_data/strategies/lib/regime_detector.py",
         ROOT / "docs/references.md",
+        ROOT / "scripts/export_lab_run.py",
+        ROOT / "user_data/strategies/market_context.py",
     ]
     assert all(path.is_file() for path in expected)
 

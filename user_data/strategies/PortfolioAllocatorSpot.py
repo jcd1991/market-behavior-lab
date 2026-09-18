@@ -102,6 +102,8 @@ class PortfolioAllocatorSpot(IStrategy):
 
     def __init__(self, config: dict) -> None:
         super().__init__(config)
+        if str(config.get("trading_mode", "spot")).lower() == "futures":
+            raise ValueError("PortfolioAllocatorSpot is spot-only; use a futures strategy for perpetual markets")
         self._alloc_pair_cache: dict[str, pd.DataFrame] = {}
         self._alloc_cache_signature: tuple | None = None
         self._alloc_hwm: dict[str, float] = {}
@@ -357,7 +359,8 @@ class PortfolioAllocatorSpot(IStrategy):
             return None
         if dataframe is None or dataframe.empty or "date" not in dataframe.columns:
             return None
-        ts = pd.Timestamp(when, tz="UTC")
+        ts = pd.Timestamp(when)
+        ts = ts.tz_localize("UTC") if ts.tzinfo is None else ts.tz_convert("UTC")
         rows = dataframe.loc[pd.to_datetime(dataframe["date"], utc=True, errors="coerce") <= ts]
         if rows.empty:
             return None
