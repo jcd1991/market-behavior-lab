@@ -223,6 +223,28 @@ open-interest/index data is absent. Until a venue-specific historical dataset
 is added, missing derivatives features must remain unavailable rather than be
 filled from price or another venue.
 
+The repository now includes two explicitly opt-in validation lanes:
+
+- `RegimeRoutedFundingFilter` requires a non-null, historical funding candle
+  for each entry and blocks missing funding. It does not use the live-only
+  funding API as a backtest substitute.
+- `RegimeRoutedBasisOI` requests mark, index, funding, and open-interest
+  candle types and requires basis/OI quality. It remains inactive until the
+  exact venue supplies overlapping OI history.
+
+Run `research/evaluation/derivative_manifest.py` before either lane. It
+reports file coverage and overlap with the OHLCV window. The
+`scripts/backfill_okx_derivatives.sh` helper downloads futures, mark, index,
+and funding candles into a caller-selected directory without deleting local
+data. Open-interest support is exchange- and Freqtrade-version-dependent; no
+OI values are inferred when the CLI does not expose that candle type.
+
+Liquidations are a separate event-data lane. The fixture and validator under
+`research/evaluation/liquidation_events.py` require venue, timestamp, side,
+quantity, price, and source provenance, but deliberately mark the lane as not
+backtest-ready until a licensed historical event source covers the same venue
+and dates as execution candles. An OHLCV wick is not treated as a liquidation.
+
 ## Implemented research utilities
 
 - `research/evaluation/resample_ohlcv.py` creates a clearly labeled higher-
@@ -253,6 +275,10 @@ filled from price or another venue.
   test without changing the baseline strategy defaults.
 - Missing funding data is now left missing in `QuietBreakoutSwing` and
   `SlowResidualRotation`; it is never replaced with price data.
+- `research/evaluation/derivative_features.py` computes nullable basis/OI
+  interactions and side-aware funding policies without cross-venue filling.
+- `RegimeRoutedFundingFilter` and `RegimeRoutedBasisOI` are research-only
+  derivatives lanes; the baseline `RegimeRouted` defaults are unchanged.
 
 ## Sleeve comparison
 
@@ -289,8 +315,10 @@ in this sample; sleeve quality and universe selection were.
 
 1. Run `RegimeRoutedSpotLiquidity` on native Coinbase-supported timeframes or
    document the resampling boundary in every run artifact.
-2. Add complete venue-specific spread, fee, slippage, funding, and open-interest
-   inputs before testing carry or liquidation signals.
+2. Complete venue-specific spread, fee, slippage, funding, and open-interest
+   inputs before treating carry or liquidation signals as validated. The
+   current Freqtrade checkout cannot download `open_interest` through its CLI;
+   this is a documented blocker, not a reason to backfill from another venue.
 3. Run walk-forward windows with a minimum trade-count threshold and bootstrap
    confidence intervals. The bootstrap utility is now available, but its
    intervals remain conditional on the observed trade sample.

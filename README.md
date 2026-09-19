@@ -82,6 +82,8 @@ lineage.
 | `CrossSectionalRotation` | 1h | Long/short | Cross-sectional ranking and rotation |
 | `PortfolioAllocatorSpot` | 4h | Long-only | Spot portfolio allocation experiment |
 | `RelativeValueBucket` | 1h | Long/short | Relative-value bucket research |
+| `RegimeRoutedFundingFilter` | 1h | Long/short | Requires overlapping historical funding; fail-closed validation lane |
+| `RegimeRoutedBasisOI` | 1h | Long/short | Requires both basis and open interest; no cross-venue filling |
 
 `CrossSectionalRotation_KR.py` and `spot_arch_utils.py` are supporting modules
 required by the spot allocator. They are not separate claims of venue
@@ -201,6 +203,20 @@ freqtrade backtesting --userdir "$LAB_ROOT/user_data" \
 
 These are historical research lanes only. The configs contain no credentials
 and do not constitute a U.S. leveraged-trading recommendation.
+
+Before using derivative-feature lanes, audit exact venue/date overlap:
+
+```bash
+python research/evaluation/derivative_manifest.py \
+  --data-dir "$LAB_ROOT/user_data/data/futures" \
+  --ohlcv-file "$LAB_ROOT/user_data/data/futures/BTC_USDT_USDT-1h-futures.feather"
+```
+
+`scripts/backfill_okx_derivatives.sh` downloads futures, mark, index, and
+funding candles into a separate directory without deleting existing data.
+`RegimeRoutedFundingFilter` blocks missing funding; `RegimeRoutedBasisOI`
+requires both basis and open interest. Liquidation events need a separate,
+venue-labeled historical event source and are never inferred from candle wicks.
 
 For the spot validation lane, use `examples/config.backtest.binanceus.spot.example.json`
 with `PortfolioAllocatorSpot` and canonical spot pairs such as `BTC/USDT`.
