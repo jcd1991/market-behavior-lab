@@ -1,0 +1,111 @@
+# Crypto strategy research log
+
+This document records the current research lanes and the evidence required
+before treating any result as credible. All returns below are historical
+backtests, not forecasts or investment advice.
+
+## Current data lanes
+
+- OKX perpetual futures: BTC, ETH, SOL, XRP, ADA, DOGE, and LTC.
+- Coinbase Advanced spot: BTC/USD, ETH/USD, SOL/USD, and XRP/USD.
+- Freqtrade exchange candles are the execution truth for each venue.
+- Derived Coinbase 4-hour candles are created from Coinbase 1-hour OHLCV only
+  to satisfy the strategy's higher-timeframe context. They are not native
+  exchange 4-hour candles.
+
+## Results so far
+
+### OKX perpetual futures, 1-hour, 2024-06-13 through 2025-12-02
+
+| Strategy | Trades | Profit | Profit factor | Sharpe |
+| --- | ---: | ---: | ---: | ---: |
+| `RegimeRouted` | 46 | +8.183 USDT (+0.82%) | 1.45 | 0.18 |
+| `RelativeValueBucket` | 152 | -19.405 USDT (-1.94%) | 0.12 | -3.77 |
+| `CrossSectionalRotation` | 483 | -46.093 USDT (-4.61%) | 0.36 | -5.98 |
+
+`RegimeRouted` remained positive in rolling windows:
+
+- 2024-06-13 through 2024-12-31: +0.393 USDT, 15 trades.
+- 2025-01-01 through 2025-06-30: +1.976 USDT, 10 trades.
+- 2025-07-01 through 2025-12-02: +5.814 USDT, 21 trades.
+
+### Cost and path-risk sensitivity
+
+For the expanded `RegimeRouted` run, applying additional round-trip execution
+costs produced:
+
+| Additional cost | Result |
+| ---: | ---: |
+| 0 bps | +0.82% |
+| 10 bps | +0.50% |
+| 20 bps | +0.19% |
+| 40 bps | -0.44% |
+| 60 bps | -1.07% |
+
+Trade-order Monte Carlo kept the 46 observed outcomes fixed and permuted their
+order. The 95th-percentile maximum drawdown was 1.06%, with an eight-trade
+losing streak. This measures path risk only; it does not establish a future
+edge or account for parameter uncertainty.
+
+The sample is still too small for a profitability claim. In particular, the
+full-period result is sensitive to pair universe, leverage, fees, and venue.
+
+### OKX perpetual futures, 4-hour, seven pairs
+
+With the required 1-day context data available:
+
+- `QuietBreakoutSwing`: 13 trades, -3.047 USDT (-0.30%).
+- `SlowResidualRotation`: 31 trades, -11.075 USDT (-1.11%).
+
+Their earlier zero-trade result was not valid evidence because the required
+1-day informative candles were absent.
+
+### Coinbase Advanced spot, 1-hour, 2025-01-26 through 2025-12-02
+
+`RegimeRoutedSpotLiquidity` produced 3 trades across BTC, ETH, SOL, and XRP,
+for -1.845 USD (-0.18%). This is an early validation lane with a small sample.
+The Coinbase 4-hour context was resampled from 1-hour data because the exchange
+adapter did not expose native 4-hour candles.
+
+Additional cost sensitivity made the spot result worse: it was -0.21% with
+10 bps of extra round-trip cost and -0.30% with 40 bps.
+
+## Implemented research utilities
+
+- `research/evaluation/resample_ohlcv.py` creates a clearly labeled higher-
+  timeframe OHLCV file from a lower-timeframe source.
+- `research/evaluation/combine_sleeves.py` combines independent Freqtrade
+  exports using explicit capital weights. It is an approximate diversification
+  study, not a synchronized multi-strategy execution simulation.
+- `RegimeRoutedSpotLiquidity` adds spot-only volume/liquidity and ATR guards,
+  plus optional UTC-session and weekend sizing.
+- Missing funding data is now left missing in `QuietBreakoutSwing` and
+  `SlowResidualRotation`; it is never replaced with price data.
+
+## Sleeve comparison
+
+A 70/15/15 approximation using `RegimeRouted`, `QuietBreakoutSwing`, and
+`SlowResidualRotation` produced +3.610 USDT (+0.36%) with a 6.548 USDT maximum
+drawdown. A 50/25/25 blend of `RegimeRouted`, `RelativeValueBucket`, and
+`CrossSectionalRotation` produced -12.283 USDT (-1.23%). These are not proof
+that the first allocation is optimal; they show that diversification only helps
+when the added sleeves do not dilute the stronger sleeve with persistent losses.
+
+## Next acceptance gates
+
+1. Run `RegimeRoutedSpotLiquidity` on native Coinbase-supported timeframes or
+   document the resampling boundary in every run artifact.
+2. Add complete venue-specific spread, fee, slippage, funding, and open-interest
+   inputs before testing carry or liquidation signals.
+3. Run walk-forward windows with a minimum trade-count threshold and bootstrap
+   confidence intervals.
+4. Compare long-only, short-only, and long/short results separately.
+5. Validate the same configuration on a second U.S.-accessible spot venue.
+6. Keep leveraged derivatives research separate from the U.S. spot execution
+   lane and obtain venue/legal review before any live use.
+
+Useful background research includes [Momentum and liquidity in
+cryptocurrencies](https://arxiv.org/abs/1904.00890), [Coinbase's primer on
+perpetual futures](https://www.coinbase.com/institutional/research-insights/research/market-intelligence/a-primer-on-perpetual-futures),
+and [session-based momentum and reversal research for Bitcoin and
+Ethereum](https://www.mdpi.com/1911-8074/19/9/692).
