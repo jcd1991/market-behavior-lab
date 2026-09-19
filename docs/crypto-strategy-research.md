@@ -443,6 +443,56 @@ reworked at the portfolio level before further tuning, and Kalman residuals
 need more observations and a second venue. These results are historical
 backtests, not performance promises.
 
+## Native shorter-candle validation
+
+The OKX downloader was run for the same seven perpetual pairs and historical
+window at native `30m` and `15m` resolutions. Each pair produced 26,399
+30-minute candles and 52,799 15-minute candles. Local validation found no
+duplicate timestamps, internal gaps, null OHLCV fields, or invalid high/low
+relationships. These files remain local research inputs and are ignored by
+Git; they are not bundled as a public data distribution.
+
+The first shorter-frequency results were:
+
+| Lane | 15m trades | 15m profit | 30m trades | 30m profit |
+| --- | ---: | ---: | ---: | ---: |
+| `RegimeRouted` | 109 | -6.785 USDT (-0.678%) | 67 | -12.239 USDT (-1.224%) |
+| `RegimeRoutedVolTarget` | 109 | -10.840 USDT (-1.084%) | 67 | -18.472 USDT (-1.847%) |
+| `JumpAwareRegimeRouted` | 103 | -0.124 USDT (-0.012%) | not run | — |
+| `KalmanResidual` | 30 | -2.358 USDT (-0.236%) | not run | — |
+
+This does not show that shorter candles are inherently worse. It shows that
+the current configuration did not transfer from 1h to 15m or 30m without
+retuning signal horizons, stops, fees, and execution assumptions. The 15m
+jump-aware result is only a follow-up hypothesis: its drawdown was still 1.56%
+and the result is venue- and window-specific.
+
+The first short-timeframe run also exposed and fixed two project-specific
+runtime issues: a nanosecond-versus-millisecond UTC merge-key mismatch and an
+all-warmup-NaN informative fallback. The fixes preserve causal ordering and do
+not fill from future candles.
+
+### Other finer-grained sources
+
+Alternative native sources are available, but they must remain separate
+validation lanes:
+
+- Binance documents native `1m`, `3m`, `5m`, `15m`, and `30m` klines for spot
+  and derivative products. See the [Binance market-data documentation](https://developers.binance.com/en/docs/products/spot/rest-api/market-data-endpoints).
+- Coinbase Advanced provides public market-data REST and WebSocket interfaces,
+  but Coinbase spot pairs must be tested as spot pairs such as `BTC/USD`, not
+  substituted for OKX perpetual candles. See the [Coinbase Advanced Trade
+  documentation](https://docs.cdp.coinbase.com/advanced-trade/docs/ws-overview/).
+- Kraken Futures documents native `1m`, `5m`, `15m`, and `30m` market candles,
+  including separate spot, mark, and trade tick types. See the [Kraken Futures
+  candle documentation](https://docs.kraken.com/api/docs/futures-api/charts/candles).
+
+Binance, Coinbase, and Kraken data can answer venue-transfer questions, but
+they cannot repair missing OKX execution history. CoinGecko remains reference
+data only. For 5m research, trade-level or order-book data is preferable for
+spread and slippage estimation; OHLCV-only 5m results should be treated as
+screening evidence, not execution evidence.
+
 ## Next acceptance gates
 
 1. Run `RegimeRoutedSpotLiquidity` on native Coinbase-supported timeframes or

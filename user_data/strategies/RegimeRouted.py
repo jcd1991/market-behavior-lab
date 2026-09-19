@@ -25160,8 +25160,11 @@ class RegimeRouted(IStrategy):
         renamed = {col: f"{col}_{itf}" for col in inf_cols}
         right = df_itf[["date", *inf_cols]].rename(columns=renamed).copy()
         left = df_1h.copy()
-        left["_volex_date"] = pd.to_datetime(left["date"], utc=True, errors="coerce")
-        right["_volex_date"] = pd.to_datetime(right["date"], utc=True, errors="coerce")
+        # Freqtrade can return base candles at ns precision while exchange
+        # informative candles arrive at ms precision.  merge_asof requires
+        # identical datetime dtypes, so normalize both sides explicitly.
+        left["_volex_date"] = pd.to_datetime(left["date"], utc=True, errors="coerce").astype("datetime64[ms, UTC]")
+        right["_volex_date"] = pd.to_datetime(right["date"], utc=True, errors="coerce").astype("datetime64[ms, UTC]")
         right = right.drop(columns=["date"]).sort_values("_volex_date")
         left_sorted = left.sort_values("_volex_date")
         merged = pd.merge_asof(left_sorted, right, on="_volex_date", direction="backward")
@@ -25787,6 +25790,14 @@ class RegimeRouted(IStrategy):
             )
         else:
             inf["cbx4h_stx"] = "up"
+
+        # Do not pass all-warmup rows into Freqtrade's informative merge.
+        # At sub-hour base timeframes pandas may otherwise try to use an
+        # entirely-NaN historical row as a fill value and raise before the
+        # strategy can be evaluated.
+        inf = inf.loc[inf["cbx4h_donch_high"].notna() | inf["cbx4h_atr"].notna()].copy()
+        if inf.empty:
+            return dataframe
 
         # Merge: add close_4h, cbx4h_donch_high_4h, cbx4h_atr_4h, cbx4h_stx_4h
         inf_cols = inf[["date", "close", "cbx4h_donch_high", "cbx4h_atr", "cbx4h_stx"]].copy()
