@@ -11,6 +11,16 @@ from BetaNeutralResidualPortfolio import BetaNeutralResidualPortfolio
 from AdaptiveTrendPortfolio import AdaptiveTrendPortfolio
 from BaselineEMAADX import BaselineEMAADX, BaselineEMAADXSpot
 from BaselineRSIBollinger import BaselineRSIBollinger, BaselineRSIBollingerSpot
+from BaselineEnhancedLanes import (
+    BaselineEMAADXVolatility,
+    BaselineEMAADXVolatilitySpot,
+    BaselineRSIBollingerRegime,
+    BaselineRSIBollingerRegimeSpot,
+    MultiTimeframeConfirmationVolatility,
+    MultiTimeframeConfirmationVolatilitySpot,
+    StandaloneBreakoutTrendRegime,
+    StandaloneBreakoutTrendRegimeSpot,
+)
 from CostAwareMomentumGate import CostAwareMomentumGate
 from CrossSectionalReversal8W import CrossSectionalReversal8W
 from DispersionConditionedMomentum import DispersionConditionedMomentum
@@ -64,6 +74,14 @@ def test_new_lanes_are_independent_and_carry_can_fail_closed() -> None:
     assert BaselineEMAADXSpot(config).can_short is False
     assert BaselineRSIBollingerSpot(config).can_short is False
     assert MultiTimeframeConfirmationSpot(config).can_short is False
+    assert BaselineEMAADXVolatility(config).can_short is True
+    assert BaselineRSIBollingerRegime(config).can_short is True
+    assert StandaloneBreakoutTrendRegime(config).can_short is True
+    assert MultiTimeframeConfirmationVolatility(config).can_short is True
+    assert BaselineEMAADXVolatilitySpot(config).can_short is False
+    assert BaselineRSIBollingerRegimeSpot(config).can_short is False
+    assert StandaloneBreakoutTrendRegimeSpot(config).can_short is False
+    assert MultiTimeframeConfirmationVolatilitySpot(config).can_short is False
     assert FundingBasisCarry(config).can_short is True
     assert VolatilityCrashGuard(config).can_short is False
 

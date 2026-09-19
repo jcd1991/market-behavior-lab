@@ -676,6 +676,76 @@ described as a proven or “tried-and-true” profitable strategy. The official
 recommends treating backtests cautiously and comparing lookahead analysis,
 recursive analysis, and dry-run behavior.
 
+### Controlled enhancement lanes
+
+The next pass converted reusable findings from this project into explicit
+strategy classes in `BaselineEnhancedLanes.py`. Each class keeps the matching
+baseline's indicators and exits, then adds one causal gate. Long and short legs
+are filtered independently: long signals require the positive directional
+condition and short signals require the negative directional condition. Spot
+variants disable the short leg entirely.
+
+| Enhancement lane | Existing research idea reused |
+| --- | --- |
+| `BaselineRSIBollingerRegime` | Slow regime alignment from regime-routed research |
+| `BaselineEMAADXVolatility` | Volatility and liquidity gates from crash/liquidity lanes |
+| `StandaloneBreakoutTrendRegime` | Directional trend guard from the guarded breakout lane |
+| `MultiTimeframeConfirmationVolatility` | Volatility/liquidity gate layered onto informative confirmation |
+
+Derivative-feature lanes were deliberately not used as enhancements: funding,
+basis, index, and open-interest history does not overlap the tested windows
+sufficiently to support a fair comparison.
+
+The enhanced full-window runs used the same exact venue data and 0.10%
+per-side fee stress as the controls:
+
+| Lane | Venue/mode | Trades | Result | Bootstrap profitable resamples |
+| --- | --- | ---: | ---: | ---: |
+| `BaselineRSIBollingerRegime` | OKX perpetual | 89 | -0.07% | 45.9% |
+| `BaselineRSIBollingerRegimeSpot` | Binance.US spot | 46 | -0.62% | 6.2% |
+| `BaselineEMAADXVolatility` | OKX perpetual | 407 | -1.05% | 33.9% |
+| `BaselineEMAADXVolatilitySpot` | Binance.US spot | 216 | +2.77% | 81.8% |
+| `StandaloneBreakoutTrendRegime` | OKX perpetual | 174 | +5.25% | 97.7% |
+| `StandaloneBreakoutTrendRegimeSpot` | Binance.US spot | 92 | +6.53% | 99.7% |
+| `MultiTimeframeConfirmationVolatility` | OKX perpetual | 7,796 | -19.60% | 0.0% |
+| `MultiTimeframeConfirmationVolatilitySpot` | Binance.US spot | 4,839 | -9.02% | 0.0% |
+
+The Donchian regime gate is the only enhancement that improved both venues
+and both sequential windows:
+
+| Lane | 2024-06-13 to 2024-12-31 | 2025-01-01 to 2025-12-02 |
+| --- | ---: | ---: |
+| `BaselineRSIBollingerRegime` / OKX | -0.27% | +0.22% |
+| `BaselineRSIBollingerRegimeSpot` / Binance.US | -0.27% | -0.19% |
+| `BaselineEMAADXVolatility` / OKX | +0.73% | -1.53% |
+| `BaselineEMAADXVolatilitySpot` / Binance.US | +3.41% | -0.82% |
+| `StandaloneBreakoutTrendRegime` / OKX | +4.56% | +0.84% |
+| `StandaloneBreakoutTrendRegimeSpot` / Binance.US | +5.01% | +1.39% |
+| `MultiTimeframeConfirmationVolatility` / OKX | -6.90% | -12.66% |
+| `MultiTimeframeConfirmationVolatilitySpot` / Binance.US | -2.87% | -6.13% |
+
+This makes `StandaloneBreakoutTrendRegimeSpot` the strongest current research
+candidate, but it remains a screening result. It has not passed a third venue,
+and the fee stress still is not a historical bid/ask or market-impact model.
+The EMA/ADX spot result is positive in aggregate but fails the second window;
+the RSI/Bollinger gate mostly removes trades without creating a stable edge.
+
+#### Corrected informative-timeframe baseline
+
+The unchanged informative-timeframe control was rerun with the exact current
+native 5m/15m datasets. It produced 7,819 OKX trades and 5,189 Binance.US
+trades over the full window, with -19.54% and -10.28% respectively. The
+enhanced version produced slightly fewer trades but remained negative. Earlier
+lower trade counts came from a different prior local run context and are
+superseded by this clean rerun. The current result confirms that the 5m
+implementation has a turnover problem under this configuration; it should not
+be promoted without an explicit signal-edge or cooldown redesign.
+
+All eight enhanced lanes passed bounded 2025 Q1 lookahead analysis. Recursive
+analysis with startup candles of 30, 100, 300, 600, and 1,000 found no
+indicator lookahead; the two informative lanes also reported no recursive
+variance. These are implementation-integrity checks, not profitability proof.
+
 ### Coinbase loss-reduction experiment
 
 The original `StandaloneBreakoutTrendSpot` lost 9.94% in the Coinbase

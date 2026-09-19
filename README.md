@@ -112,6 +112,10 @@ lineage.
 | `MultiTimeframeConfirmation` | 5m + 15m | Long/short | Lower-timeframe signal requiring higher-timeframe agreement |
 | `BaselineRSIBollinger` / `BaselineRSIBollingerSpot` | 1h | Long/short / long-only | Unchanged RSI/Bollinger mean-reversion baseline |
 | `BaselineEMAADX` / `BaselineEMAADXSpot` | 1h | Long/short / long-only | Unchanged EMA/ADX trend-following baseline |
+| `BaselineRSIBollingerRegime` / `BaselineRSIBollingerRegimeSpot` | 1h | Long/short / long-only | Mean reversion with causal directional regime alignment |
+| `BaselineEMAADXVolatility` / `BaselineEMAADXVolatilitySpot` | 1h | Long/short / long-only | EMA/ADX with volatility, liquidity, and leg-direction gates |
+| `StandaloneBreakoutTrendRegime` / `StandaloneBreakoutTrendRegimeSpot` | 4h | Long/short / long-only | Donchian breakout with directional regime alignment |
+| `MultiTimeframeConfirmationVolatility` / `MultiTimeframeConfirmationVolatilitySpot` | 5m + 15m | Long/short / long-only | Informative timeframe confirmation with local cost proxy gates |
 
 The official upstream `SampleStrategy` and community `FSampleStrategy` were
 also evaluated as external Freqtrade baselines; they are not copied into this
