@@ -55,6 +55,12 @@ edge or account for parameter uncertainty.
 The sample is still too small for a profitability claim. In particular, the
 full-period result is sensitive to pair universe, leverage, fees, and venue.
 
+An IID bootstrap of the 46 observed trade outcomes (20,000 resamples, fixed
+seed) produced a 5th-95th percentile total-profit interval of -0.91% to
++2.77%; 76.3% of resamples were profitable. This is consistent with a
+positive observed sample but a fragile estimate whose uncertainty includes a
+loss.
+
 The side-attribution lanes show that nearly all of the observed result came
 from short entries. `RegimeRoutedShortOnly` was positive in the three rolling
 windows: +0.21% in 2024 H2, +0.04% in 2025 H1, and +0.47% in 2025 H2. It also
@@ -112,6 +118,20 @@ transfer from the OKX perpetual environment into a broad U.S. spot portfolio.
 The one-trade regime-lane results are inactive rather than statistically
 validated.
 
+Bootstrap cross-checks reinforce the distinction between lanes:
+
+- OKX `RegimeRoutedShortOnly` (13 trades): observed +0.72%, bootstrap interval
+  -0.18% to +2.00%, with 86.7% profitable resamples. This remains a small,
+  venue-specific hypothesis exposed to funding, liquidation, and shorting
+  mechanics.
+- Coinbase `RegimeRoutedSpotLiquidity` (3 trades): observed -0.18%, interval
+  -0.34% to -0.03%, with 3.8% profitable resamples. The sample is too small
+  for a strong inference, but it provides no positive spot evidence.
+- Binance.US `PortfolioAllocatorSpot` (402 trades): observed -7.55%, interval
+  -8.39% to -6.71%, with no profitable resamples. This is a robust negative
+  result for that configuration and venue window, not evidence that every
+  spot strategy fails.
+
 ### Derivatives-feature validation status
 
 Funding, index, and open-interest strategies are not yet validated. The
@@ -133,6 +153,9 @@ filled from price or another venue.
   UTC sessions and weekday/weekend buckets.
 - `research/evaluation/data_quality.py` audits optional derivative-data
   coverage and date overlap before those fields can be used.
+- `research/evaluation/bootstrap_trades.py` estimates trade-outcome
+  uncertainty with reproducible IID bootstrap intervals; it is not a future
+  performance guarantee.
 - `RegimeRoutedSpotLiquidity` adds spot-only volume/liquidity and ATR guards,
   plus optional UTC-session and weekend sizing.
 - `RegimeRoutedLongOnly` and `RegimeRoutedShortOnly` provide side-attribution
@@ -156,7 +179,8 @@ when the added sleeves do not dilute the stronger sleeve with persistent losses.
 2. Add complete venue-specific spread, fee, slippage, funding, and open-interest
    inputs before testing carry or liquidation signals.
 3. Run walk-forward windows with a minimum trade-count threshold and bootstrap
-   confidence intervals.
+   confidence intervals. The bootstrap utility is now available, but its
+   intervals remain conditional on the observed trade sample.
 4. Compare long-only, short-only, and long/short results separately.
 5. Validate the same configuration on a second U.S.-accessible spot venue.
 6. Keep leveraged derivatives research separate from the U.S. spot execution
