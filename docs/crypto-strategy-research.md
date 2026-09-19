@@ -472,6 +472,35 @@ runtime issues: a nanosecond-versus-millisecond UTC merge-key mismatch and an
 all-warmup-NaN informative fallback. The fixes preserve causal ordering and do
 not fill from future candles.
 
+### Native 5m screening experiment
+
+The same OKX perpetual universe was downloaded at native `5m` resolution for
+2024-06-01 through 2025-12-02. All seven pairs produced 158,399 candles. The
+local checks found no duplicate timestamps, internal gaps, null OHLCV values, or
+invalid high/low relationships. A temporary OKX timeout/rate-limit episode
+affected pagination for SOL, but a pair-specific retry completed the file. The
+mark/index/funding requests still returned no overlapping historical data, so
+none of those fields were substituted into the test.
+
+The screening backtests used 2024-06-13 through 2025-12-02, the same seven-pair
+universe, and `--fee 0.001` (0.10% per side). That fee is a conservative cost
+stress case, not a measured spread or slippage model:
+
+| Lane | Trades | Profit | Profit factor | Max drawdown |
+| --- | ---: | ---: | ---: | ---: |
+| `RegimeRouted` | 152 | -33.162 USDT (-3.32%) | 0.448 | 3.75% |
+| `JumpAwareRegimeRouted` | 149 | -32.285 USDT (-3.23%) | 0.455 | 3.66% |
+| `RegimeRoutedVolTarget` | 152 | -49.461 USDT (-4.95%) | 0.455 | 5.59% |
+
+The 5m lanes therefore fail this initial screening pass. They generated more
+short-horizon turnover without demonstrating cost-adjusted edge, and the
+volatility-targeting wrapper increased drawdown. These results do not prove
+that 5m trading is impossible; they show that this configuration is not ready
+for execution claims. Any follow-up must use trade-level or order-book data to
+estimate spread and slippage, test fee sensitivity, and validate results on
+separate windows and venues. The downloaded OHLCV files remain local and
+ignored by Git; no market data was added to the public repository.
+
 ### Other finer-grained sources
 
 Alternative native sources are available, but they must remain separate
