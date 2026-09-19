@@ -34,6 +34,23 @@ backtests, not forecasts or investment advice.
 - 2025-01-01 through 2025-06-30: +1.976 USDT, 10 trades.
 - 2025-07-01 through 2025-12-02: +5.814 USDT, 21 trades.
 
+### OKX universe sensitivity
+
+The same strategy, dates, timeframe, fee model, and wallet were rerun with
+explicit static-pair configurations:
+
+| Universe | Trades | Profit | Profit factor | Bootstrap profit interval | Profitable resamples |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| BTC/ETH | 18 | +6.232 USDT (+0.62%) | 3.29 | +0.05% to +1.19% | 96.3% |
+| BTC/ETH/SOL/XRP | 31 | -1.095 USDT (-0.11%) | 0.90 | -0.95% to +0.71% | 41.3% |
+| Seven-pair universe | 46 | +8.183 USDT (+0.82%) | 1.45 | -0.91% to +2.77% | 76.3% |
+
+The BTC/ETH-only result is the cleanest of these samples, but it still has
+only 18 trades and was selected after inspecting the broader results. The
+majors result shows that adding SOL and XRP diluted the result; adding ADA,
+DOGE, and LTC restored aggregate performance. This is universe-selection
+sensitivity, not evidence that the strategy has a general crypto edge.
+
 ### Cost and path-risk sensitivity
 
 For the expanded `RegimeRouted` run, applying additional round-trip execution

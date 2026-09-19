@@ -184,6 +184,24 @@ Run a backtest:
   --export trades
 ```
 
+For the documented OKX universe-sensitivity study, use the explicit
+credential-free configs under `examples/`:
+
+```bash
+freqtrade backtesting --userdir "$LAB_ROOT/user_data" \
+  --config "$LAB_ROOT/examples/config.backtest.okx.btc-eth.example.json" \
+  --datadir "$LAB_ROOT/user_data/data" --strategy RegimeRouted \
+  --timerange 20240613-20251202 --export trades
+
+freqtrade backtesting --userdir "$LAB_ROOT/user_data" \
+  --config "$LAB_ROOT/examples/config.backtest.okx.expanded.example.json" \
+  --datadir "$LAB_ROOT/user_data/data" --strategy RegimeRouted \
+  --timerange 20240613-20251202 --export trades
+```
+
+These are historical research lanes only. The configs contain no credentials
+and do not constitute a U.S. leveraged-trading recommendation.
+
 For the spot validation lane, use `examples/config.backtest.binanceus.spot.example.json`
 with `PortfolioAllocatorSpot` and canonical spot pairs such as `BTC/USDT`.
 Futures-only strategies and fields such as funding, mark price, and index price
