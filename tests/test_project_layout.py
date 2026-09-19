@@ -20,6 +20,7 @@ def test_public_layout_is_present() -> None:
         ROOT / "scripts/export_lab_run.py",
         ROOT / "research/evaluation/bootstrap_trades.py",
         ROOT / "research/evaluation/simulate_sleeves.py",
+        ROOT / "research/evaluation/walk_forward_report.py",
         ROOT / "user_data/strategies/market_context.py",
     ]
     assert all(path.is_file() for path in expected)

@@ -34,6 +34,22 @@ backtests, not forecasts or investment advice.
 - 2025-01-01 through 2025-06-30: +1.976 USDT, 10 trades.
 - 2025-07-01 through 2025-12-02: +5.814 USDT, 21 trades.
 
+Overlapping six-month windows show why the full-period result should not be
+treated as a stable forecast:
+
+| Window | Trades | Result | Bootstrap profit interval | Profitable resamples |
+| --- | ---: | ---: | ---: | ---: |
+| 2024-06-13 to 2024-12-13 | 15 | +0.04% | -0.53% to +0.60% | 55.1% |
+| 2024-09-01 to 2025-03-01 | 14 | -0.33% | -0.88% to +0.21% | 16.0% |
+| 2024-12-01 to 2025-06-01 | 10 | +0.20% | -0.16% to +0.59% | 80.3% |
+| 2025-03-01 to 2025-09-01 | 19 | +0.35% | -0.30% to +1.04% | 80.5% |
+| 2025-06-01 to 2025-12-02 | 21 | +0.58% | -1.02% to +2.37% | 69.8% |
+
+Every interval includes zero and every window has fewer than 22 trades. The
+late-2024 overlap is negative and has only 16.0% profitable bootstrap
+resamples. The apparent improvement in later 2025 is therefore a hypothesis
+about the tested market regime, not evidence of persistent future alpha.
+
 ### OKX universe sensitivity
 
 The same strategy, dates, timeframe, fee model, and wallet were rerun with
@@ -173,6 +189,8 @@ filled from price or another venue.
 - `research/evaluation/bootstrap_trades.py` estimates trade-outcome
   uncertainty with reproducible IID bootstrap intervals; it is not a future
   performance guarantee.
+- `research/evaluation/walk_forward_report.py` produces labeled rolling-window
+  summaries from Freqtrade exports and applies the same bootstrap protocol.
 - `research/evaluation/simulate_sleeves.py` merges entry/exit timestamps,
   applies capital weights, and enforces a shared maximum-open-position limit.
 - `RegimeRoutedSpotLiquidity` adds spot-only volume/liquidity and ATR guards,
