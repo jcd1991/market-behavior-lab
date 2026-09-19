@@ -80,6 +80,35 @@ adapter did not expose native 4-hour candles.
 Additional cost sensitivity made the spot result worse: it was -0.21% with
 10 bps of extra round-trip cost and -0.30% with 40 bps.
 
+### Session attribution
+
+For the expanded OKX `RegimeRouted` run, the 46 trades grouped as follows:
+
+- Asia/overnight: 17 trades, +13.052 USDT.
+- Europe: 7 trades, -2.040 USDT.
+- U.S. session: 22 trades, -2.829 USDT.
+- Weekday: 40 trades, +13.191 USDT.
+- Weekend: 6 trades, -5.008 USDT.
+
+The short-only lane showed the same directional pattern: +7.892 USDT in
+Asia/overnight and -0.671 USDT during the U.S. session. This is a hypothesis
+for session-aware sizing, not enough evidence to prohibit U.S.-session trades.
+
+### Binance.US spot, native 4-hour candles, 2024-02-20 through 2025-12-02
+
+The same U.S.-spot validation was repeated across BTC, ETH, SOL, BNB, XRP,
+and DOGE:
+
+- `RegimeRoutedSpot`: 1 BTC trade, -0.093 USDT (-0.01%).
+- `RegimeRoutedSpotLiquidity`: 1 BTC trade, -0.073 USDT (-0.01%).
+- `PortfolioAllocatorSpot`: 402 trades, -75.505 USDT (-7.55%), profit factor
+  0.13, Sharpe -8.63.
+
+The Binance.US result is a useful negative control: the strategies did not
+transfer from the OKX perpetual environment into a broad U.S. spot portfolio.
+The one-trade regime-lane results are inactive rather than statistically
+validated.
+
 ## Implemented research utilities
 
 - `research/evaluation/resample_ohlcv.py` creates a clearly labeled higher-
@@ -87,6 +116,10 @@ Additional cost sensitivity made the spot result worse: it was -0.21% with
 - `research/evaluation/combine_sleeves.py` combines independent Freqtrade
   exports using explicit capital weights. It is an approximate diversification
   study, not a synchronized multi-strategy execution simulation.
+- `research/evaluation/cost_sensitivity.py` applies additional round-trip
+  execution costs to exported trades.
+- `research/evaluation/session_sensitivity.py` attributes exported trades to
+  UTC sessions and weekday/weekend buckets.
 - `RegimeRoutedSpotLiquidity` adds spot-only volume/liquidity and ATR guards,
   plus optional UTC-session and weekend sizing.
 - `RegimeRoutedLongOnly` and `RegimeRoutedShortOnly` provide side-attribution
