@@ -6,10 +6,12 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).parents[1] / "user_data" / "strategies"))
 
 from CryptoMomentumRotation import CryptoMomentumRotation
+from CryptoMomentumRotationSpot import CryptoMomentumRotationSpot
 from FundingBasisCarry import FundingBasisCarry
 from RelativeValueStatArb import RelativeValueStatArb
 from ScheduledPortfolioRotation import ScheduledPortfolioRotation
 from StandaloneBreakoutTrend import StandaloneBreakoutTrend
+from StandaloneBreakoutTrendSpot import StandaloneBreakoutTrendSpot
 from VolatilityCrashGuard import VolatilityCrashGuard
 from research_strategy_helpers import scheduled_bars
 
@@ -25,8 +27,10 @@ def test_scheduled_bars_are_utc_and_causal() -> None:
 def test_new_lanes_are_independent_and_carry_can_fail_closed() -> None:
     config = {"timeframe": "1h", "exchange": {"pair_whitelist": ["BTC/USDT:USDT"]}}
     assert CryptoMomentumRotation(config).can_short is True
+    assert CryptoMomentumRotationSpot(config).can_short is False
     assert ScheduledPortfolioRotation(config).can_short is False
     assert StandaloneBreakoutTrend(config).can_short is True
+    assert StandaloneBreakoutTrendSpot(config).can_short is False
     assert RelativeValueStatArb(config).can_short is True
     assert FundingBasisCarry(config).can_short is True
     assert VolatilityCrashGuard(config).can_short is False

@@ -490,6 +490,43 @@ blocked; and crash protection should be evaluated as a portfolio overlay rather
 than an alpha strategy. None of these lanes should be marketed as expected to
 make money.
 
+### Venue-transfer and walk-forward check
+
+The independent lanes were then evaluated on locally available U.S.-accessible
+spot data. The tests used the same 0.10% per-side fee stress, but venue and
+timeframe are not interchangeable:
+
+| Venue and lane | Timeframe | Window | Trades | Profit | Max drawdown |
+| --- | --- | --- | ---: | ---: | ---: |
+| Binance.US `CryptoMomentumRotationSpot` | 1h | 2024-06-13 to 2025-12-02 | 252 | -5.788 USDT (-0.58%) | 2.75% |
+| Binance.US `ScheduledPortfolioRotation` | 4h | 2024-06-13 to 2025-12-02 | 119 | +18.775 USDT (+1.88%) | 1.66% |
+| Binance.US `StandaloneBreakoutTrendSpot` | 4h | 2024-06-13 to 2025-12-02 | 104 | +59.502 USDT (+5.95%) | 1.17% |
+| Binance.US `VolatilityCrashGuard` | 1h | 2024-06-13 to 2025-12-02 | 12 | -0.834 USDT (-0.08%) | 0.11% |
+| Coinbase `CryptoMomentumRotationSpot` | 1h | 2025-01-26 to 2025-12-02 | 90 | -74.919 USD (-7.49%) | 8.45% |
+| Coinbase `ScheduledPortfolioRotation` | 1h* | 2025-01-26 to 2025-12-02 | 41 | -76.849 USD (-7.68%) | 7.68% |
+| Coinbase `StandaloneBreakoutTrendSpot` | 1h* | 2025-01-26 to 2025-12-02 | 273 | -76.388 USD (-7.64%) | 10.54% |
+| Coinbase `VolatilityCrashGuard` | 1h | 2025-01-26 to 2025-12-02 | 14 | -3.842 USD (-0.38%) | 0.68% |
+
+`*` Coinbase's Freqtrade adapter does not expose native `4h`, so those checks
+used 1h and are not direct timeframe matches to the Binance.US rows. The
+long-only wrappers `CryptoMomentumRotationSpot` and
+`StandaloneBreakoutTrendSpot` exist to make spot compatibility explicit;
+short-capable strategies are never silently run in spot mode.
+
+The Binance.US breakout lane was also split into sequential windows:
+
+| Window | Trades | Profit | Max drawdown |
+| --- | ---: | ---: | ---: |
+| 2024 H2 | 42 | +4.77% | 0.51% |
+| 2025 H1 | 37 | -0.32% | 1.23% |
+| 2025 H2 | 25 | +1.58% | 0.49% |
+
+This is encouraging as a screening result because it is not confined to one
+positive window, but it is still not validation: Coinbase did not reproduce it,
+the windows are not independent market regimes, and the fee stress is not a
+measured spread/slippage model. The next gate is trade-level cost estimation,
+then a third venue or a longer rolling walk-forward with a minimum trade count.
+
 ## Native shorter-candle validation
 
 The OKX downloader was run for the same seven perpetual pairs and historical
