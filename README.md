@@ -76,6 +76,7 @@ lineage.
 | Strategy | Timeframe | Side | Role |
 | --- | --- | --- | --- |
 | `RegimeRouted` | 1h | Long/short | Primary regime-routed futures research strategy |
+| `RegimeRoutedSpot` | 1h | Long-only | Coinbase Advanced spot validation lane |
 | `SlowResidualRotation` | 4h | Long-only | Slower residual and momentum rotation |
 | `QuietBreakoutSwing` | 4h | Long-only | Lower-frequency breakout research |
 | `CrossSectionalRotation` | 1h | Long/short | Cross-sectional ranking and rotation |
@@ -113,6 +114,10 @@ The final spot rewrites were instructive failures:
 
 See [`docs/evaluation.md`](docs/evaluation.md) for the full interpretation,
 windows, and limitations.
+
+For the separate Coinbase Advanced spot lane, see
+[`docs/coinbase-spot-validation.md`](docs/coinbase-spot-validation.md). It is
+an exchange-specific validation experiment, not a profitability promise.
 
 ## Install upstream Freqtrade
 
