@@ -20,6 +20,8 @@ backtests, not forecasts or investment advice.
 | Strategy | Trades | Profit | Profit factor | Sharpe |
 | --- | ---: | ---: | ---: | ---: |
 | `RegimeRouted` | 46 | +8.183 USDT (+0.82%) | 1.45 | 0.18 |
+| `RegimeRoutedLongOnly` | 33 | +0.961 USDT (+0.10%) | 1.06 | 0.02 |
+| `RegimeRoutedShortOnly` | 13 | +7.221 USDT (+0.72%) | 4.36 | 0.14 |
 | `RelativeValueBucket` | 152 | -19.405 USDT (-1.94%) | 0.12 | -3.77 |
 | `CrossSectionalRotation` | 483 | -46.093 USDT (-4.61%) | 0.36 | -5.98 |
 
@@ -50,6 +52,14 @@ edge or account for parameter uncertainty.
 The sample is still too small for a profitability claim. In particular, the
 full-period result is sensitive to pair universe, leverage, fees, and venue.
 
+The side-attribution lanes show that nearly all of the observed result came
+from short entries. `RegimeRoutedShortOnly` was positive in the three rolling
+windows: +0.21% in 2024 H2, +0.04% in 2025 H1, and +0.47% in 2025 H2. It also
+remained positive under the tested additional round-trip cost assumptions up to
+60 bps. This is a useful hypothesis, not proof of a stable short alpha: it has
+only 13 trades, is exposed to borrow/funding/liquidation mechanics, and was
+tested on one perpetual venue.
+
 ### OKX perpetual futures, 4-hour, seven pairs
 
 With the required 1-day context data available:
@@ -79,6 +89,8 @@ Additional cost sensitivity made the spot result worse: it was -0.21% with
   study, not a synchronized multi-strategy execution simulation.
 - `RegimeRoutedSpotLiquidity` adds spot-only volume/liquidity and ATR guards,
   plus optional UTC-session and weekend sizing.
+- `RegimeRoutedLongOnly` and `RegimeRoutedShortOnly` provide side-attribution
+  lanes without changing the parent strategy's indicators or exits.
 - Missing funding data is now left missing in `QuietBreakoutSwing` and
   `SlowResidualRotation`; it is never replaced with price data.
 
