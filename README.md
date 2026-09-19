@@ -84,6 +84,7 @@ lineage.
 | `RelativeValueBucket` | 1h | Long/short | Relative-value bucket research |
 | `RegimeRoutedFundingFilter` | 1h | Long/short | Requires overlapping historical funding; fail-closed validation lane |
 | `RegimeRoutedBasisOI` | 1h | Long/short | Requires both basis and open interest; no cross-venue filling |
+| `HurstRegimeSwitch` | 1h | Long/short | Experimental Hurst-conditioned momentum/mean-reversion lane |
 
 `CrossSectionalRotation_KR.py` and `spot_arch_utils.py` are supporting modules
 required by the spot allocator. They are not separate claims of venue

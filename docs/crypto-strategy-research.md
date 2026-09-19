@@ -230,7 +230,15 @@ The repository now includes two explicitly opt-in validation lanes:
   funding API as a backtest substitute.
 - `RegimeRoutedBasisOI` requests mark, index, funding, and open-interest
   candle types and requires basis/OI quality. It remains inactive until the
-  exact venue supplies overlapping OI history.
+exact venue supplies overlapping OI history.
+
+It also includes `HurstRegimeSwitch`, an OHLCV-only research lane inspired by
+work that uses Hurst-style persistence classification to select momentum or
+mean reversion. On the expanded OKX seven-pair 1h window from 2024-06-08
+through 2025-12-02, the unoptimized implementation made 862 trades and lost
+88.626 USDT (-8.86%) from a 1,000 USDT starting balance, with a 0.70 profit
+factor, -4.21 Sharpe, and 9.00% maximum drawdown. This is a failed transfer
+test, not a reason to optimize the same window until it looks profitable.
 
 Run `research/evaluation/derivative_manifest.py` before either lane. It
 reports file coverage and overlap with the OHLCV window. The

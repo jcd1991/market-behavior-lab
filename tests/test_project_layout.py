@@ -18,6 +18,8 @@ def test_public_layout_is_present() -> None:
         ROOT / "user_data/strategies/RegimeRoutedAsiaWindow.py",
         ROOT / "user_data/strategies/RegimeRoutedFundingFilter.py",
         ROOT / "user_data/strategies/RegimeRoutedBasisOI.py",
+        ROOT / "user_data/strategies/HurstRegimeSwitch.py",
+        ROOT / "user_data/strategies/hurst.py",
         ROOT / "user_data/strategies/lib/regime_detector.py",
         ROOT / "docs/references.md",
         ROOT / "scripts/export_lab_run.py",
@@ -29,6 +31,7 @@ def test_public_layout_is_present() -> None:
         ROOT / "research/evaluation/derivative_manifest.py",
         ROOT / "research/evaluation/derivative_features.py",
         ROOT / "research/evaluation/liquidation_events.py",
+        ROOT / "research/evaluation/hurst.py",
         ROOT / "scripts/backfill_okx_derivatives.sh",
     ]
     assert all(path.is_file() for path in expected)
