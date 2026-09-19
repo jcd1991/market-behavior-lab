@@ -136,6 +136,14 @@ The short-only lane showed the same directional pattern: +7.892 USDT in
 Asia/overnight and -0.671 USDT during the U.S. session. This is a hypothesis
 for session-aware sizing, not enough evidence to prohibit U.S.-session trades.
 
+That hypothesis was tested with a separate `RegimeRoutedAsiaWindow` lane that
+allows entries only from 00:00 through 07:00 UTC. On the same expanded OKX
+window it produced 15 trades, +1.026 USDT (+0.10%), and a 1.51 profit factor.
+Its bootstrap profit interval was -0.26% to +0.44%, with 69.6% profitable
+resamples. The session restriction therefore did not improve the baseline
+`RegimeRouted` result and remains an exploratory lane rather than a default
+filter.
+
 ### Binance.US spot, native 4-hour candles, 2024-02-20 through 2025-12-02
 
 The same U.S.-spot validation was repeated across BTC, ETH, SOL, BNB, XRP,
@@ -197,6 +205,8 @@ filled from price or another venue.
   plus optional UTC-session and weekend sizing.
 - `RegimeRoutedLongOnly` and `RegimeRoutedShortOnly` provide side-attribution
   lanes without changing the parent strategy's indicators or exits.
+- `RegimeRoutedAsiaWindow` provides a fixed 00:00-07:00 UTC session hypothesis
+  test without changing the baseline strategy defaults.
 - Missing funding data is now left missing in `QuietBreakoutSwing` and
   `SlowResidualRotation`; it is never replaced with price data.
 
