@@ -42,6 +42,39 @@ intentionally redistributed from a research paper.
   and [publisher DOI](https://doi.org/10.1016/j.frl.2019.09.013). Informed
   the decision to keep sampling frequency and venue as explicit test factors.
 
+- Bui, D. and Nguyen, T. (2026), “Systematic Trend-Following with Adaptive
+  Portfolio Construction: Enhancing Risk-Adjusted Alpha in Cryptocurrency
+  Markets,” [arXiv:2602.11708](https://arxiv.org/abs/2602.11708). Informed the
+  `AdaptiveTrendPortfolio` screen: intermediate-frequency momentum, rolling
+  risk-adjusted selection, and volatility-scaled trailing exits. The paper's
+  market-cap history and execution model were not available locally and were
+  not silently substituted.
+- Kiefer, P. and Nowotny, M. (2026), “Reversal in Cryptocurrency Returns,”
+  [SSRN record](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6703978).
+  Informed the `CrossSectionalReversal8W` screen. Its reported Binance USDT
+  universe, high-volatility conditioning, and survivorship-aware design are
+  requirements for a later larger-universe replication.
+- Bysik, A. and Ślepaczuk, R. (2026), “Machine Learning-Based Bitcoin Trading
+  Under Transaction Costs: Evidence From Walk-Forward Forecasting,”
+  [SSRN record](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6795938).
+  Informed `CostAwareMomentumGate` and the requirement that forecast magnitude
+  exceed modeled fees, spread, slippage, and a safety margin before trading.
+- Perera, N. (2026), “Volume Profile Mean Reversion Strategy with Tape Speed
+  Confirmation for Cryptocurrency Futures Markets,”
+  [SSRN record](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6932998).
+  Informed `VolumeProfileOHLCVProxy`. The repository implementation is only a
+  candle-volume proxy and does not claim to reproduce trade-level tape speed.
+- Goswami, R. (2026), “Multi-Timeframe Signal Confirmation in Algorithmic
+  Cryptocurrency Trading: A Backtest Study on ETH/USDT,”
+  [SSRN record](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6683818).
+  Informed `MultiTimeframeConfirmation`; the small reported sample makes this
+  a control experiment rather than evidence of an edge.
+- Dashyan, A. (2026), “A Symmetric Trend Veto is Two Different Objects: 5.7
+  Years of Barrier Outcomes on Twenty Cryptocurrency Perpetuals,”
+  [SSRN record](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7418978).
+  Informed `SymmetricTrendVeto`, with long and short veto thresholds tested as
+  separate controls.
+
 ## Data and library references
 
 Market-data endpoints and Python libraries are implementation dependencies, not
