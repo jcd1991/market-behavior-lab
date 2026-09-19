@@ -15,6 +15,7 @@ def test_public_layout_is_present() -> None:
         ROOT / "examples/config.dry-run.example.json",
         ROOT / "examples/config.backtest.binanceus.spot.example.json",
         ROOT / "user_data/strategies/RegimeRouted.py",
+        ROOT / "user_data/strategies/RegimeRoutedAsiaWindow.py",
         ROOT / "user_data/strategies/lib/regime_detector.py",
         ROOT / "docs/references.md",
         ROOT / "scripts/export_lab_run.py",
