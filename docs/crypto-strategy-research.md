@@ -12,6 +12,9 @@ backtests, not forecasts or investment advice.
 - Derived Coinbase 4-hour candles are created from Coinbase 1-hour OHLCV only
   to satisfy the strategy's higher-timeframe context. They are not native
   exchange 4-hour candles.
+- The current OKX files contain full historical OHLCV and mark candles, but no
+  index-price or open-interest files. Funding files contain roughly 100 rows
+  from June-July 2026, outside the 2024-2025 backtest windows.
 
 ## Results so far
 
@@ -109,6 +112,14 @@ transfer from the OKX perpetual environment into a broad U.S. spot portfolio.
 The one-trade regime-lane results are inactive rather than statistically
 validated.
 
+### Derivatives-feature validation status
+
+Funding, index, and open-interest strategies are not yet validated. The
+available funding timestamps do not overlap the historical backtests, and
+open-interest/index data is absent. Until a venue-specific historical dataset
+is added, missing derivatives features must remain unavailable rather than be
+filled from price or another venue.
+
 ## Implemented research utilities
 
 - `research/evaluation/resample_ohlcv.py` creates a clearly labeled higher-
@@ -120,6 +131,8 @@ validated.
   execution costs to exported trades.
 - `research/evaluation/session_sensitivity.py` attributes exported trades to
   UTC sessions and weekday/weekend buckets.
+- `research/evaluation/data_quality.py` audits optional derivative-data
+  coverage and date overlap before those fields can be used.
 - `RegimeRoutedSpotLiquidity` adds spot-only volume/liquidity and ATR guards,
   plus optional UTC-session and weekend sizing.
 - `RegimeRoutedLongOnly` and `RegimeRoutedShortOnly` provide side-attribution
