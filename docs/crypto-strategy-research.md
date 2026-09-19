@@ -262,6 +262,8 @@ and dates as execution candles. An OHLCV wick is not treated as a liquidation.
   study, not a synchronized multi-strategy execution simulation.
 - `research/evaluation/cost_sensitivity.py` applies additional round-trip
   execution costs to exported trades.
+- `research/evaluation/orderbook_cost_snapshot.py` records current public
+  order-book spread and depth slippage for cost calibration only.
 - `research/evaluation/session_sensitivity.py` attributes exported trades to
   UTC sessions and weekday/weekend buckets.
 - `research/evaluation/data_quality.py` audits optional derivative-data
@@ -526,6 +528,42 @@ positive window, but it is still not validation: Coinbase did not reproduce it,
 the windows are not independent market regimes, and the fee stress is not a
 measured spread/slippage model. The next gate is trade-level cost estimation,
 then a third venue or a longer rolling walk-forward with a minimum trade count.
+
+### Execution-cost calibration snapshot
+
+Historical OHLCV does not contain the bid/ask queue or market-impact path needed
+to measure the spread paid by each historical trade. The new
+`research/evaluation/orderbook_cost_snapshot.py` utility therefore records
+timestamped public order-book observations for calibration only. It estimates
+top-of-book spread and depth-based buy/sell slippage for a requested notional;
+it does not modify candles or rewrite historical trade results.
+
+A current USD 20 snapshot on 2026-09-19 UTC reported the following indicative
+costs:
+
+| Venue | Pair | Spread | Buy depth slippage | Sell depth slippage |
+| --- | --- | ---: | ---: | ---: |
+| Binance.US | BTC/USDT | 0.001 bps | 0.001 bps | 0.001 bps |
+| Binance.US | ETH/USDT | 0.683 bps | 0.341 bps | 0.341 bps |
+| Binance.US | SOL/USDT | 1.797 bps | 0.898 bps | 0.898 bps |
+| Coinbase | BTC/USD | 0.001 bps | 0.001 bps | 0.001 bps |
+| Coinbase | ETH/USD | 0.152 bps | 0.076 bps | 0.076 bps |
+| Coinbase | SOL/USD | 0.899 bps | 0.449 bps | 0.449 bps |
+| Kraken | BTC/USD | 0.012 bps | 0.006 bps | 0.006 bps |
+| Kraken | ETH/USD | 0.038 bps | 0.019 bps | 0.019 bps |
+
+These are live snapshots, not historical execution measurements, and can change
+materially with volatility, order size, and time of day. The breakout
+trade-level scenario check remained positive on the full Binance.US run at
+additional round-trip costs of 10, 20, 40, 80, and 120 bps (+5.74%, +5.54%,
++5.13%, +4.31%, and +3.48%). Coinbase remained negative before any additional
+cost (-7.64%), so current liquidity snapshots do not rescue that venue result.
+
+An attempted Kraken OHLCV download exposed a separate data limitation: the
+current Freqtrade/CCXT path reports that Kraken historical klines require
+trade-download aggregation. No Kraken candles were used in the comparison, and
+the live Kraken order-book snapshots must not be presented as a third historical
+backtest venue.
 
 ## Native shorter-candle validation
 

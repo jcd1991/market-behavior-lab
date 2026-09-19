@@ -250,6 +250,16 @@ The public configurations keep `dry_run` enabled, disable Telegram/API access,
 contain no credentials, and use a small simulated wallet. Live trading is not
 part of the public quickstart.
 
+For current execution-cost calibration only, capture a public order-book
+snapshot. This is not historical spread/slippage data and must not be merged
+into backtest candles:
+
+```bash
+"$FREQTRADE_ROOT/.venv/bin/python" \
+  "$LAB_ROOT/research/evaluation/orderbook_cost_snapshot.py" \
+  --exchange binanceus --pair BTC/USDT --pair ETH/USDT --notional 20
+```
+
 ## Research checks
 
 The repository includes small, dependency-light checks for the reusable research
