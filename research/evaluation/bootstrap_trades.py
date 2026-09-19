@@ -13,6 +13,7 @@ import argparse
 import json
 import random
 import zipfile
+from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -115,6 +116,28 @@ def bootstrap(
     }
 
 
+def grouped_bootstrap(
+    trades: list[dict[str, Any]],
+    *,
+    group_by: str,
+    starting_balance: float,
+    iterations: int,
+    seed: int,
+) -> dict[str, dict[str, Any]]:
+    """Bootstrap each categorical group independently for attribution."""
+    groups: dict[str, list[float]] = defaultdict(list)
+    for trade in trades:
+        label = str(trade.get(group_by, "")) or "<missing>"
+        groups[label].append(_float(trade.get("profit_abs")))
+    return {
+        label: bootstrap(
+            pnls,
+            starting_balance=starting_balance,
+            iterations=iterations,
+            seed=seed,
+        )
+        for label, pnls in sorted(groups.items())
+    }
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=Path, required=True)
@@ -122,6 +145,7 @@ def main() -> int:
     parser.add_argument("--starting-balance", type=float, default=1000.0)
     parser.add_argument("--iterations", type=int, default=10000)
     parser.add_argument("--seed", type=int, default=1337)
+    parser.add_argument("--group-by", help="Also report independent bootstrap results by a trade field, e.g. pair")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
 
@@ -135,6 +159,14 @@ def main() -> int:
     )
     result["input"] = str(args.input.resolve())
     result["strategy"] = args.strategy
+    if args.group_by:
+        result["groups"] = grouped_bootstrap(
+            trades,
+            group_by=args.group_by,
+            starting_balance=args.starting_balance,
+            iterations=args.iterations,
+            seed=args.seed,
+        )
     rendered = json.dumps(result, indent=2, sort_keys=True)
     if args.output:
         args.output.write_text(rendered + "\n")
