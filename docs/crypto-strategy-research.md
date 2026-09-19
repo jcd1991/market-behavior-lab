@@ -443,6 +443,53 @@ reworked at the portfolio level before further tuning, and Kalman residuals
 need more observations and a second venue. These results are historical
 backtests, not performance promises.
 
+## Independent strategy families
+
+Because `RegimeRouted` combines too many hypotheses, the next experiment split
+the research into independent lanes rather than adding more router filters:
+
+- `CryptoMomentumRotation`: cross-sectional momentum versus the universe
+  median, with scheduled UTC entries.
+- `ScheduledPortfolioRotation`: lower-turnover, long-only rotation on a
+  4-hour rebalance schedule.
+- `StandaloneBreakoutTrend`: Donchian/ATR trend following without a regime
+  detector.
+- `RelativeValueStatArb`: fixed BTC-leader residual mean reversion with rolling
+  beta and z-score.
+- `FundingBasisCarry`: funding, mark, and index carry that fails closed when
+  exact-venue historical derivatives data is missing.
+- `VolatilityCrashGuard`: long-only trend participation gated by BTC trend and
+  realized-volatility conditions.
+
+The initial comparison used the expanded OKX seven-pair universe, a common
+2024-06-13 through 2025-12-02 window, and `--fee 0.001` (0.10% per side):
+
+| Lane | Timeframe | Trades | Profit | Max drawdown |
+| --- | --- | ---: | ---: | ---: |
+| `CryptoMomentumRotation` | 1h | 408 | -47.324 USDT (-4.73%) | 5.88% |
+| `ScheduledPortfolioRotation` | 4h | 137 | +3.277 USDT (+0.33%) | 2.58% |
+| `StandaloneBreakoutTrend` | 4h | 190 | +58.365 USDT (+5.84%) | 1.17% |
+| `RelativeValueStatArb` | 1h | 404 | -57.514 USDT (-5.75%) | 7.57% |
+| `FundingBasisCarry` | 1h | 0 | unavailable | 0.00% |
+| `VolatilityCrashGuard` | 1h | 8 | -0.215 USDT (-0.02%) | 0.07% |
+
+The breakout result is the most interesting screening lead, but it is not a
+profitability claim. A ten-epoch Sharpe-oriented parameter search found an
+in-sample candidate with 230 trades and +3.83%; when retested on the held-out
+2025-06-01 through 2025-12-02 window it produced 23 trades and -0.18% with
+0.49% drawdown. The scheduled rotation search found an in-sample +2.19%; its
+held-out result was 33 trades and -0.35% with 1.65% drawdown. The tuned files
+were kept outside the public tree so the repository defaults remain transparent
+and do not silently encode an overfit result.
+
+These results change the research priority, not the evidence standard:
+standalone breakout trend deserves more independent venues and walk-forward
+windows; scheduled rotation is a lower-turnover secondary lead; momentum and
+residual stat-arb are rejected in this configuration; carry remains data
+blocked; and crash protection should be evaluated as a portfolio overlay rather
+than an alpha strategy. None of these lanes should be marketed as expected to
+make money.
+
 ## Native shorter-candle validation
 
 The OKX downloader was run for the same seven perpetual pairs and historical

@@ -45,6 +45,13 @@ def test_public_layout_is_present() -> None:
         ROOT / "user_data/strategies/ClusterRotation.py",
         ROOT / "user_data/strategies/KalmanResidual.py",
         ROOT / "scripts/backfill_okx_derivatives.sh",
+        ROOT / "user_data/strategies/CryptoMomentumRotation.py",
+        ROOT / "user_data/strategies/ScheduledPortfolioRotation.py",
+        ROOT / "user_data/strategies/StandaloneBreakoutTrend.py",
+        ROOT / "user_data/strategies/RelativeValueStatArb.py",
+        ROOT / "user_data/strategies/FundingBasisCarry.py",
+        ROOT / "user_data/strategies/VolatilityCrashGuard.py",
+        ROOT / "user_data/strategies/research_strategy_helpers.py",
     ]
     assert all(path.is_file() for path in expected)
 

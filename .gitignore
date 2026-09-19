@@ -11,6 +11,7 @@ __pycache__/
 user_data/data/*
 !user_data/data/.gitkeep
 user_data/backtest_results/
+user_data/hyperopt_results/
 user_data/logs/
 user_data/*.sqlite
 user_data/*.sqlite3
