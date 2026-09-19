@@ -8,9 +8,13 @@ sys.path.insert(0, str(Path(__file__).parents[1] / "user_data" / "strategies"))
 from CryptoMomentumRotation import CryptoMomentumRotation
 from CryptoMomentumRotationSpot import CryptoMomentumRotationSpot
 from BetaNeutralResidualPortfolio import BetaNeutralResidualPortfolio
+from AdaptiveTrendPortfolio import AdaptiveTrendPortfolio
+from CostAwareMomentumGate import CostAwareMomentumGate
+from CrossSectionalReversal8W import CrossSectionalReversal8W
 from DispersionConditionedMomentum import DispersionConditionedMomentum
 from FundingBasisCarry import FundingBasisCarry
 from MultiHorizonTrendReversal import MultiHorizonTrendReversal
+from MultiTimeframeConfirmation import MultiTimeframeConfirmation
 from RelativeValueStatArb import RelativeValueStatArb
 from ScheduledPortfolioRotation import ScheduledPortfolioRotation
 from SizeLiquidityDualSignal import SizeLiquidityDualSignal
@@ -19,6 +23,8 @@ from StandaloneBreakoutTrendSpot import StandaloneBreakoutTrendSpot
 from StandaloneBreakoutTrendSpotGuarded import StandaloneBreakoutTrendSpotGuarded
 from VolatilityConditionedReversal import VolatilityConditionedReversal
 from VolatilityCrashGuard import VolatilityCrashGuard
+from SymmetricTrendVeto import SymmetricTrendVeto
+from VolumeProfileOHLCVProxy import VolumeProfileOHLCVProxy
 from research_strategy_helpers import scheduled_bars
 
 
@@ -44,6 +50,12 @@ def test_new_lanes_are_independent_and_carry_can_fail_closed() -> None:
     assert MultiHorizonTrendReversal(config).can_short is True
     assert SizeLiquidityDualSignal(config).can_short is True
     assert VolatilityConditionedReversal(config).can_short is True
+    assert CrossSectionalReversal8W(config).can_short is True
+    assert AdaptiveTrendPortfolio(config).can_short is True
+    assert SymmetricTrendVeto(config).can_short is True
+    assert CostAwareMomentumGate(config).can_short is True
+    assert VolumeProfileOHLCVProxy(config).can_short is True
+    assert MultiTimeframeConfirmation(config).can_short is True
     assert FundingBasisCarry(config).can_short is True
     assert VolatilityCrashGuard(config).can_short is False
 

@@ -524,6 +524,34 @@ third venue with measured spread and slippage. Order-flow, liquidation, and
 reinforcement-learning variants remain deferred until reliable event-level data
 is available.
 
+### 2026 research-inspired strategy screens
+
+The following lanes were implemented from recent 2026 working papers and
+research preprints. The implementations are deliberately narrower than the
+papers where the local data cannot support an exact reproduction.
+
+| Lane | Data used | Trades | Full-window result | Split result | Status |
+| --- | --- | ---: | ---: | --- | --- |
+| `CrossSectionalReversal8W` | OKX 4h, 12 perpetuals | 124 | +0.38% | -1.55%, then +1.68% | Research lead, unstable |
+| `AdaptiveTrendPortfolio` | OKX 1h, 12 perpetuals; 6h decision schedule | 1581 | -12.23% | -3.91%, then -8.14% | Reject baseline |
+| `SymmetricTrendVeto` | OKX 1h, 12 perpetuals | 4160 | -8.35% | -2.40%, then -5.76% | Reject baseline |
+| `CostAwareMomentumGate` | OKX 1h, 12 perpetuals | 782 | -2.43% | -1.10%, then -1.50% | Reject baseline |
+| `VolumeProfileOHLCVProxy` | OKX native 5m, 7 perpetuals | 1715 | -11.66% | -7.00%, then -4.69% | Reject; proxy only |
+| `MultiTimeframeConfirmation` | OKX native 5m + 15m, 7 perpetuals | 590 | -0.67% | +0.76%, then -0.83% | Control only |
+
+All results use 0.10% per-side fees. The 5m volume-profile lane uses a
+candle-volume proxy for tape speed and therefore does not reproduce a
+trade-level tape-speed study. The adaptive trend implementation uses a 1-hour
+data stream with entries restricted to six-hour UTC decision points; it does not
+claim to reproduce a native six-hour exchange feed or the paper's point-in-time
+market-cap universe.
+
+The results reinforce the project's existing conclusion: adding complexity did
+not automatically create profitability. Only the cross-sectional reversal lane
+deserves a larger-data follow-up, and that follow-up requires at least 30
+point-in-time assets, survivorship-aware membership, and another venue before
+parameter tuning.
+
 ### Coinbase loss-reduction experiment
 
 The original `StandaloneBreakoutTrendSpot` lost 9.94% in the Coinbase

@@ -104,6 +104,12 @@ lineage.
 | `DispersionConditionedMomentum` | 4h | Long/short | Cross-sectional momentum activated by universe dispersion |
 | `MultiHorizonTrendReversal` | 1h | Long/short | Fixed multi-horizon trend and short-horizon reversal blend |
 | `BetaNeutralResidualPortfolio` | 1h | Long/short | Residual lane with a signal-level BTC beta cap |
+| `CrossSectionalReversal8W` | 4h | Long/short | High-volatility 8-week cross-sectional reversal |
+| `AdaptiveTrendPortfolio` | 1h decision / 6h schedule | Long/short | Rolling-Sharpe trend selection with ATR trailing exits |
+| `SymmetricTrendVeto` | 1h | Long/short | Trend lane with separate long/short trailing-return vetoes |
+| `CostAwareMomentumGate` | 1h | Long/short | Momentum entries gated above modeled execution costs |
+| `VolumeProfileOHLCVProxy` | 5m | Long/short | Previous-day volume-profile and candle-volume proxy |
+| `MultiTimeframeConfirmation` | 5m + 15m | Long/short | Lower-timeframe signal requiring higher-timeframe agreement |
 
 `CrossSectionalRotation_KR.py` and `spot_arch_utils.py` are supporting modules
 required by the spot allocator. They are not separate claims of venue
