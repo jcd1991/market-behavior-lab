@@ -9,12 +9,15 @@ from CryptoMomentumRotation import CryptoMomentumRotation
 from CryptoMomentumRotationSpot import CryptoMomentumRotationSpot
 from BetaNeutralResidualPortfolio import BetaNeutralResidualPortfolio
 from AdaptiveTrendPortfolio import AdaptiveTrendPortfolio
+from BaselineEMAADX import BaselineEMAADX, BaselineEMAADXSpot
+from BaselineRSIBollinger import BaselineRSIBollinger, BaselineRSIBollingerSpot
 from CostAwareMomentumGate import CostAwareMomentumGate
 from CrossSectionalReversal8W import CrossSectionalReversal8W
 from DispersionConditionedMomentum import DispersionConditionedMomentum
 from FundingBasisCarry import FundingBasisCarry
 from MultiHorizonTrendReversal import MultiHorizonTrendReversal
 from MultiTimeframeConfirmation import MultiTimeframeConfirmation
+from MultiTimeframeConfirmation import MultiTimeframeConfirmationSpot
 from RelativeValueStatArb import RelativeValueStatArb
 from ScheduledPortfolioRotation import ScheduledPortfolioRotation
 from SizeLiquidityDualSignal import SizeLiquidityDualSignal
@@ -56,6 +59,11 @@ def test_new_lanes_are_independent_and_carry_can_fail_closed() -> None:
     assert CostAwareMomentumGate(config).can_short is True
     assert VolumeProfileOHLCVProxy(config).can_short is True
     assert MultiTimeframeConfirmation(config).can_short is True
+    assert BaselineEMAADX(config).can_short is True
+    assert BaselineRSIBollinger(config).can_short is True
+    assert BaselineEMAADXSpot(config).can_short is False
+    assert BaselineRSIBollingerSpot(config).can_short is False
+    assert MultiTimeframeConfirmationSpot(config).can_short is False
     assert FundingBasisCarry(config).can_short is True
     assert VolatilityCrashGuard(config).can_short is False
 

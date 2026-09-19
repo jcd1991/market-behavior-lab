@@ -63,6 +63,8 @@ def test_public_layout_is_present() -> None:
         ROOT / "user_data/strategies/CostAwareMomentumGate.py",
         ROOT / "user_data/strategies/VolumeProfileOHLCVProxy.py",
         ROOT / "user_data/strategies/MultiTimeframeConfirmation.py",
+        ROOT / "user_data/strategies/BaselineRSIBollinger.py",
+        ROOT / "user_data/strategies/BaselineEMAADX.py",
         ROOT / "user_data/strategies/RelativeValueStatArb.py",
         ROOT / "user_data/strategies/FundingBasisCarry.py",
         ROOT / "user_data/strategies/VolatilityCrashGuard.py",

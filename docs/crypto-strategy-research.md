@@ -595,6 +595,87 @@ a time. Public strategy repository backtests are not transferable evidence;
 they must be rerun against the exact venue, pairlist, fee, slippage, and date
 window used here.
 
+### Baseline validation matrix
+
+The baseline pass was run unchanged before any tuning. The full window was
+2024-06-13 through 2025-12-02, with native OKX perpetual data for futures and
+native Binance.US spot data for spot. Each backtest used a 0.10% fee per side,
+the same static six-pair universe where available, and the market mode required
+by the strategy. These are screening results, not claims that any strategy is
+profitable.
+
+| Lane | Venue/mode | Trades | Full-window result | Max drawdown |
+| --- | --- | ---: | ---: | ---: |
+| `SampleStrategy` | Binance.US spot | 95 | -0.73% | 1.03% |
+| `FSampleStrategy` | OKX perpetual | 194 | +1.73% | 4.39% |
+| `BaselineRSIBollinger` | OKX perpetual | 1,496 | -16.95% | 18.05% |
+| `BaselineRSIBollingerSpot` | Binance.US spot | 109 | -2.73% | 3.17% |
+| `BaselineEMAADX` | OKX perpetual | 806 | +2.38% | 4.39% |
+| `BaselineEMAADXSpot` | Binance.US spot | 61 | +0.76% | 2.27% |
+| `StandaloneBreakoutTrend` | OKX perpetual | 1,763 | -4.87% | 7.21% |
+| `StandaloneBreakoutTrendSpot` | Binance.US spot | 104 | +5.95% | 1.17% |
+| `MultiTimeframeConfirmation` | OKX perpetual | 590 | -0.67% | 1.95% |
+| `MultiTimeframeConfirmationSpot` | Binance.US spot | 113 | +2.87% | 1.58% |
+
+The walk-forward split was 2024-06-13 through 2024-12-31, followed by
+2025-01-01 through 2025-12-02. The most important result is instability:
+
+| Lane | First split | Second split |
+| --- | ---: | ---: |
+| `FSampleStrategy` / OKX | +3.19% | -1.42% |
+| `BaselineEMAADX` / OKX | +4.57% | -1.99% |
+| `StandaloneBreakoutTrend` / OKX | +0.03% | -4.73% |
+| `StandaloneBreakoutTrendSpot` / Binance.US | +4.77% | +1.18% |
+| `MultiTimeframeConfirmationSpot` / Binance.US | +3.58% | -0.66% |
+
+The Binance.US spot breakout is the strongest screening lead because it stayed
+positive in both sequential windows. It still has only 104 trades, did not
+transfer to OKX futures, and has not yet passed a third-venue test.
+
+#### Bias, recursion, and Monte Carlo checks
+
+Lookahead analysis on a bounded 2025 Q1 window found no lookahead bias for any
+of the ten venue/strategy lanes. Recursive analysis with startup-candle
+settings of 30, 100, 300, 600, and 1,000 also found no recursive variance or
+indicator lookahead. These checks show that the implementations are causal;
+they do not show that the signals have predictive power.
+
+An IID trade bootstrap used 10,000 resamples with seed 1337. The percentage of
+profitable resamples was: `SampleStrategy` 17.0%, `FSampleStrategy` 61.3%,
+RSI/Bollinger OKX 0.0%, RSI/Bollinger spot 1.5%, EMA/ADX OKX 71.1%, EMA/ADX
+spot 55.7%, Donchian OKX 7.3%, Donchian spot 99.0%, informative confirmation
+OKX 36.4%, and informative confirmation spot 78.3%. This is a conditional
+resampling diagnostic, not an independent forward test and not a probability
+of future profit.
+
+#### Fees versus slippage
+
+The backtests include the stated 0.10% per-side fee stress. Historical OHLCV
+does not contain the bid/ask queue or market-impact path needed to measure the
+slippage paid by each historical trade, so this matrix does **not** contain
+measured historical slippage. Current order-book snapshots are useful for
+calibration but cannot be backdated onto these trades. A future execution-grade
+pass must join venue- and timestamp-matched trades with spread/depth or trade-
+level data; modeled cost sensitivity must remain labeled as modeled.
+
+#### Dry-run comparison
+
+Credential-free Binance.US spot dry-run startup reached exchange and strategy
+resolution for the tested spot lanes. OKX futures initialization was limited
+by the exchange's leverage-tier endpoint rate limit while resolving roughly
+467 markets in the local dry-run environment. Backtesting completed normally;
+the OKX dry-run result is therefore a runtime/setup limitation, not evidence
+for or against strategy performance. It must be rerun with a cached or
+venue-approved leverage-tier snapshot before treating the futures dry-run as
+fully validated.
+
+The official `SampleStrategy` is a template, and the community
+`FSampleStrategy` is distributed as a starting point. Neither should be
+described as a proven or “tried-and-true” profitable strategy. The official
+[Freqtrade strategy guidance](https://www.freqtrade.io/en/stable/strategy-101/)
+recommends treating backtests cautiously and comparing lookahead analysis,
+recursive analysis, and dry-run behavior.
+
 ### Coinbase loss-reduction experiment
 
 The original `StandaloneBreakoutTrendSpot` lost 9.94% in the Coinbase

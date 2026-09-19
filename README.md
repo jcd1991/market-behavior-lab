@@ -110,6 +110,13 @@ lineage.
 | `CostAwareMomentumGate` | 1h | Long/short | Momentum entries gated above modeled execution costs |
 | `VolumeProfileOHLCVProxy` | 5m | Long/short | Previous-day volume-profile and candle-volume proxy |
 | `MultiTimeframeConfirmation` | 5m + 15m | Long/short | Lower-timeframe signal requiring higher-timeframe agreement |
+| `BaselineRSIBollinger` / `BaselineRSIBollingerSpot` | 1h | Long/short / long-only | Unchanged RSI/Bollinger mean-reversion baseline |
+| `BaselineEMAADX` / `BaselineEMAADXSpot` | 1h | Long/short / long-only | Unchanged EMA/ADX trend-following baseline |
+
+The official upstream `SampleStrategy` and community `FSampleStrategy` were
+also evaluated as external Freqtrade baselines; they are not copied into this
+repository. See the [baseline validation matrix](docs/crypto-strategy-research.md#baseline-validation-matrix)
+for the exact datasets, diagnostics, and limitations.
 
 `CrossSectionalRotation_KR.py` and `spot_arch_utils.py` are supporting modules
 required by the spot allocator. They are not separate claims of venue
