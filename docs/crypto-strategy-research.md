@@ -552,6 +552,49 @@ deserves a larger-data follow-up, and that follow-up requires at least 30
 point-in-time assets, survivorship-aware membership, and another venue before
 parameter tuning.
 
+### Parameter-tuning audit
+
+The six 2026-inspired lanes were tuned for 10 epochs on the first segment,
+2024-06-13 through 2024-12-31, with the 2025 segment held out. The best
+parameter set from each search was then frozen and rerun across the full
+2024-06-13 through 2025-12-02 window:
+
+| Lane | Tuned segment | Frozen 2025 holdout | Full window | Interpretation |
+| --- | ---: | ---: | ---: | --- |
+| `CrossSectionalReversal8W` | +2.15% | -0.32% | -0.05% | Overfit / no edge |
+| `AdaptiveTrendPortfolio` | +3.75% | -1.47% | +2.80% | Positive aggregate, failed holdout |
+| `SymmetricTrendVeto` | -1.29% | -2.55% | -1.46% | No profitable parameter set found |
+| `CostAwareMomentumGate` | +1.56% | -2.00% | -0.78% | Overfit / no edge |
+| `VolumeProfileOHLCVProxy` | -2.91% | -2.05% | -5.26% | No edge in OHLCV proxy |
+| `MultiTimeframeConfirmation` | +0.76% | -2.63% | -0.71% | Overfit / no edge |
+
+The tuned files were temporary and were not committed. This audit confirms that
+the full-window `AdaptiveTrendPortfolio` gain is driven by the training period
+and should not be presented as a validated result. Freqtrade's own guidance
+also warns that backtests can be distorted and recommends lookahead analysis,
+recursive analysis, and dry-run comparison before trusting a strategy.
+
+### Established Freqtrade baselines to investigate next
+
+There is no official “tried and true” profitable Freqtrade strategy. The
+official `SampleStrategy` is a development template, and the community
+`freqtrade-strategies` repository explicitly describes its strategies as
+starting points whose results depend on pair, timeframe, venue, and timerange.
+The next baseline study should therefore test known strategy families rather
+than import a claimed winner:
+
+1. `SampleStrategy` / `FSampleStrategy` as implementation and futures
+   compatibility baselines.
+2. RSI plus Bollinger mean reversion with volume and trend filters.
+3. EMA/ADX trend following with ATR stop and trailing exit.
+4. Supertrend or Donchian trend following with volatility-scaled sizing.
+5. Informative-timeframe confirmation using the official v3 strategy APIs.
+
+Each baseline must be tested unchanged first, then with one controlled change at
+a time. Public strategy repository backtests are not transferable evidence;
+they must be rerun against the exact venue, pairlist, fee, slippage, and date
+window used here.
+
 ### Coinbase loss-reduction experiment
 
 The original `StandaloneBreakoutTrendSpot` lost 9.94% in the Coinbase
