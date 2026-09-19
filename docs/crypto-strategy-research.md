@@ -499,6 +499,13 @@ The selected candidate was then held out:
 - Coinbase 2025-05-01 through 2025-12-02: +2.68%, 136 trades, 1.92% drawdown.
 - Binance.US 2024-06-13 through 2025-12-02: +4.95%, 155 trades, 0.73% drawdown.
 
+With the repository-default guarded parameters rerun across the complete
+available windows, the results were Coinbase 2025-01-26 through 2025-12-02:
+-6.00% from 245 trades and 9.43% drawdown, versus Binance.US 2024-06-13
+through 2025-12-02: +6.19% from 87 trades and 1.22% drawdown. The guard is a
+small Coinbase loss reduction relative to the unguarded -7.64% full-window
+result, not a profitable Coinbase solution.
+
 This is risk reduction, not a successful repair of the target window. Making
 the strategy break even there would require either overfitting the date range
 or suppressing participation until the result is trivially zero. The guarded
