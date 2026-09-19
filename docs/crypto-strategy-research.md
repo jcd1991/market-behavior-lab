@@ -484,6 +484,46 @@ held-out result was 33 trades and -0.35% with 1.65% drawdown. The tuned files
 were kept outside the public tree so the repository defaults remain transparent
 and do not silently encode an overfit result.
 
+### Additional candidate lanes
+
+Five further candidates were implemented and screened against the exact local
+OKX perpetual candle files. The test window was 2024-06-13 through 2025-12-02,
+with 0.10% per-side fees and no synthetic derivatives fields. The reversal lane
+uses native 15-minute candles on the original seven-pair universe. The other
+four use native 1-hour or 4-hour candles on a synchronized 12-pair universe:
+BTC, ETH, SOL, XRP, ADA, DOGE, LTC, LINK, DOT, NEAR, UNI, and ATOM.
+
+`SizeLiquidityDualSignal` uses rolling dollar volume as a reproducible liquidity
+proxy; it is not a claim that exchange market-cap or true institutional size was
+measured. `BetaNeutralResidualPortfolio` applies a rolling BTC beta cap at the
+signal level; it does not guarantee that the aggregate open portfolio is beta
+neutral without an allocator.
+
+| Lane | Native timeframe | Trades | Profit | Max drawdown | Screening read |
+| --- | --- | ---: | ---: | ---: | --- |
+| `VolatilityConditionedReversal` | 15m | 901 | -56.357 USDT (-5.64%) | 5.83% | Reject at baseline |
+| `SizeLiquidityDualSignal` | 1h | 206 | +3.666 USDT (+0.37%) | 2.16% | Weak, unstable |
+| `DispersionConditionedMomentum` | 4h | 136 | +19.055 USDT (+1.91%) | 1.11% | Promising but not robust |
+| `MultiHorizonTrendReversal` | 1h | 1224 | +20.257 USDT (+2.03%) | 6.99% | Positive aggregate, regime-sensitive |
+| `BetaNeutralResidualPortfolio` | 1h | 302 | -41.635 USDT (-4.16%) | 5.21% | Reject at baseline |
+
+The split-window check shows why the positive aggregate results are not yet
+portable evidence:
+
+| Lane | 2024-06-13 to 2024-12-31 | 2025-01-01 to 2025-12-02 |
+| --- | ---: | ---: |
+| `VolatilityConditionedReversal` | -2.22% | -3.41% |
+| `SizeLiquidityDualSignal` | +1.85% | -1.49% |
+| `DispersionConditionedMomentum` | +2.47% | -0.56% |
+| `MultiHorizonTrendReversal` | +8.74% | -6.51% |
+| `BetaNeutralResidualPortfolio` | -2.25% | -1.88% |
+
+These are research screens, not tuned production candidates. The next gate for
+the two positive full-window lanes is a pre-registered walk-forward test on a
+third venue with measured spread and slippage. Order-flow, liquidation, and
+reinforcement-learning variants remain deferred until reliable event-level data
+is available.
+
 ### Coinbase loss-reduction experiment
 
 The original `StandaloneBreakoutTrendSpot` lost 9.94% in the Coinbase

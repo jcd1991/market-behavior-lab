@@ -8,7 +8,10 @@ from pandas import DataFrame
 
 
 def utc_series(values: pd.Series) -> pd.Series:
-    return pd.to_datetime(values, utc=True, errors="coerce")
+    # Freqtrade can provide candle dates at ns precision while informative
+    # data may arrive at ms precision.  Normalize both to one timezone-aware
+    # dtype before merge_asof or cross-sectional alignment.
+    return pd.to_datetime(values, utc=True, errors="coerce").astype("datetime64[ns, UTC]")
 
 
 def scheduled_bars(dataframe: DataFrame, hours: int) -> pd.Series:

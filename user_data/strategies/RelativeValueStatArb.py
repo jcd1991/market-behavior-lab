@@ -68,8 +68,10 @@ class RelativeValueStatArb(IStrategy):
         z = (residual - mean) / std
         corr = y.diff().rolling(window, min_periods=window // 2).corr(x.diff())
         merged["rva_z"] = z
+        merged["rva_beta"] = beta
         merged["rva_corr"] = corr
         dataframe["rva_z"] = merged["rva_z"].to_numpy()
+        dataframe["rva_beta"] = merged["rva_beta"].to_numpy()
         dataframe["rva_corr"] = merged["rva_corr"].to_numpy()
         dataframe["enter_long"] = (dataframe["rva_corr"].ge(float(self.buy_rva_corr_min.value)) & dataframe["rva_z"].le(-float(self.buy_rva_entry_z.value))).astype(int)
         dataframe["enter_short"] = (dataframe["rva_corr"].ge(float(self.buy_rva_corr_min.value)) & dataframe["rva_z"].ge(float(self.buy_rva_entry_z.value))).astype(int)
