@@ -189,6 +189,21 @@ drawdown. A 50/25/25 blend of `RegimeRouted`, `RelativeValueBucket`, and
 that the first allocation is optimal; they show that diversification only helps
 when the added sleeves do not dilute the stronger sleeve with persistent losses.
 
+Using the BTC/ETH-only `RegimeRouted` lane as the stronger sleeve changed the
+capital-weighted approximation to:
+
+- 70/15/15 with `QuietBreakoutSwing` and `SlowResidualRotation`: +2.244 USDT
+  (+0.22%), 62 combined trades, and 1.152 USDT maximum drawdown.
+- 50/25/25 with `RelativeValueBucket` and `CrossSectionalRotation`: -13.258
+  USDT (-1.33%), 653 combined trades, and 13.361 USDT maximum drawdown.
+
+The first blend is positive only because the BTC/ETH sleeve dominates its
+allocation; the second demonstrates that adding high-turnover negative sleeves
+can materially worsen both return and drawdown. The evaluator combines closed
+trade outcomes from independent runs and does not model a synchronized
+multi-strategy allocator, shared open-trade capacity, correlated intrabar
+losses, funding, or order contention.
+
 ## Next acceptance gates
 
 1. Run `RegimeRoutedSpotLiquidity` on native Coinbase-supported timeframes or
