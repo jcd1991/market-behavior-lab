@@ -34,6 +34,7 @@ def test_public_layout_is_present() -> None:
         ROOT / "research/evaluation/hurst.py",
         ROOT / "research/evaluation/ghe.py",
         ROOT / "research/evaluation/frequency_sensitivity.py",
+        ROOT / "research/evaluation/orderbook_cost_snapshot.py",
         ROOT / "user_data/strategies/RelativeValueGHE.py",
         ROOT / "user_data/strategies/ghe.py",
         ROOT / "research/evaluation/advanced_strategies.py",
