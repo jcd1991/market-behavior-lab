@@ -36,6 +36,14 @@ def test_public_layout_is_present() -> None:
         ROOT / "research/evaluation/frequency_sensitivity.py",
         ROOT / "user_data/strategies/RelativeValueGHE.py",
         ROOT / "user_data/strategies/ghe.py",
+        ROOT / "research/evaluation/advanced_strategies.py",
+        ROOT / "user_data/strategies/advanced_strategy_helpers.py",
+        ROOT / "user_data/strategies/RegimeRoutedVolTarget.py",
+        ROOT / "user_data/strategies/JumpAwareRegimeRouted.py",
+        ROOT / "user_data/strategies/CryptoFactorEnsemble.py",
+        ROOT / "user_data/strategies/VolatilityManagedMomentum.py",
+        ROOT / "user_data/strategies/ClusterRotation.py",
+        ROOT / "user_data/strategies/KalmanResidual.py",
         ROOT / "scripts/backfill_okx_derivatives.sh",
     ]
     assert all(path.is_file() for path in expected)

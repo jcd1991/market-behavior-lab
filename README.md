@@ -83,6 +83,12 @@ lineage.
 | `PortfolioAllocatorSpot` | 4h | Long-only | Spot portfolio allocation experiment |
 | `RelativeValueBucket` | 1h | Long/short | Relative-value bucket research |
 | `RelativeValueGHE` | 1h | Long/short | Fixed residual leader map with causal generalized-Hurst filter |
+| `RegimeRoutedVolTarget` | 1h | Long/short | Regime router with volatility-targeted sizing |
+| `JumpAwareRegimeRouted` | 1h | Long/short | Regime router with negative-jump stress veto |
+| `CryptoFactorEnsemble` | 1h | Long/short | Transparent momentum, reversal, liquidity, and volatility factors |
+| `VolatilityManagedMomentum` | 4h | Long-only | Slow momentum/residual sleeve with volatility-managed sizing |
+| `ClusterRotation` | 1h | Long/short | Cross-sectional rotation with correlation concentration control |
+| `KalmanResidual` | 1h | Long/short | Relative-value lane with a causal adaptive hedge ratio |
 | `RegimeRoutedFundingFilter` | 1h | Long/short | Requires overlapping historical funding; fail-closed validation lane |
 | `RegimeRoutedBasisOI` | 1h | Long/short | Requires both basis and open interest; no cross-venue filling |
 | `HurstRegimeSwitch` | 1h | Long/short | Experimental Hurst-conditioned momentum/mean-reversion lane |

@@ -393,6 +393,56 @@ Order-flow and reinforcement-learning candidates remain deferred until the
 research stack has tick, trade, or order-book data with exact venue and time
 coverage. OHLCV candles cannot recreate those inputs.
 
+## Advanced OHLCV research lanes
+
+Six additional experimental lanes are included without changing the baseline
+defaults:
+
+1. `RegimeRoutedVolTarget` scales the existing regime-router stake by causal
+   realized volatility.
+2. `JumpAwareRegimeRouted` vetoes entries after unusually negative standardized
+   returns.
+3. `CryptoFactorEnsemble` combines momentum, reversal, liquidity, and
+   volatility ranks transparently.
+4. `VolatilityManagedMomentum` applies volatility-managed sizing to the slower
+   momentum/residual sleeve.
+5. `ClusterRotation` adds a conservative concentration veto; full cross-pair
+   cluster labels are available in `advanced_strategies.py` for portfolio-level
+   research.
+6. `KalmanResidual` replaces the fixed residual hedge estimate with a causal
+   adaptive hedge-ratio experiment.
+
+These are research lanes, not six independent profitability claims. Each must
+be tested with native venue candles, fees, slippage, pair-universe controls,
+and chronological splits. The factor, jump, volatility, cluster, and Kalman
+helpers are intentionally dependency-light so their behavior can be unit
+tested separately from Freqtrade execution.
+
+The first OKX comparison used the expanded seven-pair universe, a 1,000 USDT
+starting balance, and the same fee assumptions as the baseline. Results were:
+
+| Lane | 1h trades | 1h profit | 4h trades | 4h profit |
+| --- | ---: | ---: | ---: | ---: |
+| `RegimeRoutedVolTarget` | 46 | +11.497 USDT | 3 | -8.176 USDT |
+| `JumpAwareRegimeRouted` | 46 | +8.183 USDT | 3 | -5.435 USDT |
+| `CryptoFactorEnsemble` | 470 | -46.180 USDT | 347 | -55.383 USDT |
+| `VolatilityManagedMomentum` | 8 | -3.470 USDT | 31 | -17.330 USDT |
+| `ClusterRotation` | 111 | -11.311 USDT | 39 | -3.668 USDT |
+| `KalmanResidual` | 8 | +0.109 USDT | 2 | -0.175 USDT |
+
+The apparent 1h improvement from volatility targeting came with higher
+drawdown (1.32% versus 0.86% for the baseline) and disappeared at 4h. A
+bounded 1h target-volatility sweep (`0.15`, `0.25`, `0.35`) produced identical
+results because the configured stake ceiling saturated the sizing multiplier.
+That is an implementation/tuning limitation, not evidence that the target is
+optimal. Jump veto thresholds of `2.0`, `3.0`, and `4.0` also produced the
+same trades, indicating that the default signal set rarely crossed the veto.
+
+No lane is promoted to a default. The factor and cluster wrappers should be
+reworked at the portfolio level before further tuning, and Kalman residuals
+need more observations and a second venue. These results are historical
+backtests, not performance promises.
+
 ## Next acceptance gates
 
 1. Run `RegimeRoutedSpotLiquidity` on native Coinbase-supported timeframes or
