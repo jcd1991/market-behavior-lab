@@ -32,6 +32,10 @@ def test_public_layout_is_present() -> None:
         ROOT / "research/evaluation/derivative_features.py",
         ROOT / "research/evaluation/liquidation_events.py",
         ROOT / "research/evaluation/hurst.py",
+        ROOT / "research/evaluation/ghe.py",
+        ROOT / "research/evaluation/frequency_sensitivity.py",
+        ROOT / "user_data/strategies/RelativeValueGHE.py",
+        ROOT / "user_data/strategies/ghe.py",
         ROOT / "scripts/backfill_okx_derivatives.sh",
     ]
     assert all(path.is_file() for path in expected)

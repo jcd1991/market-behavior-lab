@@ -82,6 +82,7 @@ lineage.
 | `CrossSectionalRotation` | 1h | Long/short | Cross-sectional ranking and rotation |
 | `PortfolioAllocatorSpot` | 4h | Long-only | Spot portfolio allocation experiment |
 | `RelativeValueBucket` | 1h | Long/short | Relative-value bucket research |
+| `RelativeValueGHE` | 1h | Long/short | Fixed residual leader map with causal generalized-Hurst filter |
 | `RegimeRoutedFundingFilter` | 1h | Long/short | Requires overlapping historical funding; fail-closed validation lane |
 | `RegimeRoutedBasisOI` | 1h | Long/short | Requires both basis and open interest; no cross-venue filling |
 | `HurstRegimeSwitch` | 1h | Long/short | Experimental Hurst-conditioned momentum/mean-reversion lane |
