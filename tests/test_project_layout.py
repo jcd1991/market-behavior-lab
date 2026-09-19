@@ -51,6 +51,7 @@ def test_public_layout_is_present() -> None:
         ROOT / "user_data/strategies/ScheduledPortfolioRotation.py",
         ROOT / "user_data/strategies/StandaloneBreakoutTrend.py",
         ROOT / "user_data/strategies/StandaloneBreakoutTrendSpot.py",
+        ROOT / "user_data/strategies/StandaloneBreakoutTrendSpotGuarded.py",
         ROOT / "user_data/strategies/RelativeValueStatArb.py",
         ROOT / "user_data/strategies/FundingBasisCarry.py",
         ROOT / "user_data/strategies/VolatilityCrashGuard.py",
