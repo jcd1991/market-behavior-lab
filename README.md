@@ -92,6 +92,12 @@ lineage.
 | `RegimeRoutedFundingFilter` | 1h | Long/short | Requires overlapping historical funding; fail-closed validation lane |
 | `RegimeRoutedBasisOI` | 1h | Long/short | Requires both basis and open interest; no cross-venue filling |
 | `HurstRegimeSwitch` | 1h | Long/short | Experimental Hurst-conditioned momentum/mean-reversion lane |
+| `CryptoMomentumRotation` / `CryptoMomentumRotationSpot` | 1h | Long/short / long-only | Independent cross-sectional momentum lane |
+| `ScheduledPortfolioRotation` | 4h | Long-only | Lower-turnover scheduled portfolio rotation |
+| `StandaloneBreakoutTrend` / `StandaloneBreakoutTrendSpot` | 4h | Long/short / long-only | Donchian/ATR trend-following lane |
+| `RelativeValueStatArb` | 1h | Long/short | Fixed-leader residual statistical arbitrage |
+| `FundingBasisCarry` | 1h | Long/short | Fail-closed exact-venue carry validation lane |
+| `VolatilityCrashGuard` | 1h | Long-only | Trend participation with volatility/crash gating |
 
 `CrossSectionalRotation_KR.py` and `spot_arch_utils.py` are supporting modules
 required by the spot allocator. They are not separate claims of venue
