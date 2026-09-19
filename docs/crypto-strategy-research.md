@@ -70,6 +70,25 @@ majors result shows that adding SOL and XRP diluted the result; adding ADA,
 DOGE, and LTC restored aggregate performance. This is universe-selection
 sensitivity, not evidence that the strategy has a general crypto edge.
 
+Pair-level bootstrap attribution of the seven-pair export makes the
+concentration clearer. Intervals below are conditional on each pair's observed
+trades and use a common hypothetical 1,000-unit starting balance; they are not
+portfolio allocations:
+
+| Pair | Trades | Observed result | Bootstrap profit interval | Profitable resamples |
+| --- | ---: | ---: | ---: | ---: |
+| BTC | 14 | +0.35% | -0.15% to +0.86% | 87.6% |
+| ETH | 4 | +0.27% | +0.07% to +0.49% | 98.2% |
+| DOGE | 3 | +0.63% | +0.06% to +1.20% | 100.0% |
+| LTC | 9 | +0.25% | -0.70% to +1.63% | 60.7% |
+| ADA | 3 | +0.05% | -0.49% to +0.59% | 62.6% |
+| SOL | 10 | -0.55% | -0.96% to -0.16% | 0.8% |
+| XRP | 3 | -0.18% | -0.33% to -0.03% | 0.0% |
+
+ETH and DOGE look positive in this resampling, but their trade counts are too
+small for strong inference. SOL and XRP are consistently negative in the
+sample and account for much of the majors-universe dilution.
+
 ### Buy-and-hold context on the same OKX candles
 
 The `benchmark_buy_hold.py` utility measured a one-entry/one-exit benchmark
@@ -218,8 +237,8 @@ filled from price or another venue.
 - `research/evaluation/data_quality.py` audits optional derivative-data
   coverage and date overlap before those fields can be used.
 - `research/evaluation/bootstrap_trades.py` estimates trade-outcome
-  uncertainty with reproducible IID bootstrap intervals; it is not a future
-  performance guarantee.
+  uncertainty with reproducible IID bootstrap intervals, including optional
+  pair-level attribution; it is not a future performance guarantee.
 - `research/evaluation/walk_forward_report.py` produces labeled rolling-window
   summaries from Freqtrade exports and applies the same bootstrap protocol.
 - `research/evaluation/benchmark_buy_hold.py` compares exact venue candles to
