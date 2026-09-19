@@ -201,6 +201,7 @@ class RelativeValueBucket(IStrategy):
         dataframe["rv_leader_close"] = np.nan
         dataframe["rv_corr"] = np.nan
         dataframe["rv_beta"] = np.nan
+        dataframe["rv_resid"] = np.nan
         dataframe["rv_resid_z"] = np.nan
         dataframe["rv_relvol"] = np.nan
         dataframe["rv_adx"] = np.nan
@@ -315,6 +316,9 @@ class RelativeValueBucket(IStrategy):
 
         merged["rv_corr"] = corr
         merged["rv_beta"] = beta
+        # Keep the causal residual available to research-only selectors.  The
+        # baseline entry rules continue to use the standardized residual.
+        merged["rv_resid"] = resid
         merged["rv_resid_z"] = resid_z
         merged["rv_relvol"] = relvol
         merged["rv_adx"] = adx

@@ -319,6 +319,80 @@ limit it accepted all 62 trades and returned +2.244 USDT (+0.224%). The small
 difference indicates that capacity contention was not the main source of risk
 in this sample; sleeve quality and universe selection were.
 
+## Next research lanes: residual GHE and frequency sensitivity
+
+`RelativeValueGHE` keeps the existing fixed leader map and residual entry/exit
+rules from `RelativeValueBucket`, then allows entries only when a causal
+generalized-Hurst estimate of the residual is at or below the anti-persistence
+threshold. This tests whether the residual process is currently more
+mean-reverting without introducing a rolling pair optimizer or future-informed
+pair selection. It is a research filter, not evidence that a generalized
+Hurst exponent predicts returns.
+
+```bash
+freqtrade backtesting --userdir "$LAB_ROOT/user_data" \
+  --config "$LAB_ROOT/examples/config.backtest.okx.expanded.example.json" \
+  --datadir "$LAB_ROOT/user_data/data" --strategy RelativeValueGHE \
+  --timerange 20240613-20251202 --export trades
+```
+
+Frequency sensitivity is evaluated from native Freqtrade candles, not by
+pretending that a resampled series is a new execution venue. The helper runs
+`RegimeRouted` at 1h, 4h, and 1d by default and reports trade count, return,
+win rate, profit factor, and sequential max drawdown:
+
+```bash
+FREQTRADE_ROOT=/path/to/freqtrade \
+LAB_ROOT=/path/to/market-behavior-lab \
+scripts/run_frequency_sensitivity.sh
+```
+
+The 1d lane may be rejected or be statistically thin for a given timerange;
+that is a result to document, not a reason to substitute a different venue or
+fill missing candles. Frequency findings remain conditional on the exact
+exchange, pair universe, dates, fees, and native candle availability.
+
+On the expanded OKX seven-pair window (`2024-06-13` through `2025-12-02`,
+1,000 USDT starting balance, 0.05% worst-case fee), the first comparison was:
+
+| Native timeframe | Trades | Profit | Profit factor | Max drawdown |
+| --- | ---: | ---: | ---: | ---: |
+| 1h | 46 | +8.183 USDT (+0.818%) | 1.451 | 0.857% |
+| 4h | 3 | -5.435 USDT (-0.543%) | 0.000 | 0.543% |
+| 1d | 0 | 0.000 USDT | n/a | 0.000% |
+
+The 1h result matches the existing baseline record. The 4h and 1d rows are
+frequency observations, not meaningful out-of-sample validation: the 4h row is
+only three trades and the daily lane generated none. The comparison therefore
+does not justify claiming that 1h is universally superior.
+
+The first strict `RelativeValueGHE` run on the same OKX 1h universe generated
+zero trades. Its residual GHE values stayed above the default anti-persistence
+cutoff (`0.48`) in the observed sample, so the selector correctly failed
+closed rather than relaxing the threshold until trades appeared. This is a
+negative validation result and a reason to investigate estimator choice,
+residual construction, and other venues—not a profitability claim.
+
+A bounded threshold sensitivity check (`q=1.0`, 96-candle window) tested
+cutoffs of `0.55`, `0.60`, and `0.70`:
+
+| GHE cutoff | Trades | Profit | Profit factor | Interpretation |
+| ---: | ---: | ---: | ---: | --- |
+| 0.55 | 0 | 0.000 USDT | n/a | No activation |
+| 0.60 | 2 | +0.089 USDT (+0.009%) | 2.340 | Too few trades |
+| 0.70 | 9 | -0.960 USDT (-0.096%) | 0.141 | More activity, negative result |
+
+The `0.60` result is not promoted to a default. In a chronological split,
+`0.60` returned +0.155 USDT on the earlier window with one trade and -0.066
+USDT on the later window with one trade. The `0.70` cutoff returned +0.129 USDT
+on three earlier trades and -1.089 USDT on six later trades. These samples are
+far too small to support tuning claims; the practical finding is that relaxing
+the cutoff increases activity before it demonstrates robustness.
+
+Order-flow and reinforcement-learning candidates remain deferred until the
+research stack has tick, trade, or order-book data with exact venue and time
+coverage. OHLCV candles cannot recreate those inputs.
+
 ## Next acceptance gates
 
 1. Run `RegimeRoutedSpotLiquidity` on native Coinbase-supported timeframes or
