@@ -9,6 +9,9 @@ backtests, not forecasts or investment advice.
 - OKX perpetual futures: BTC, ETH, SOL, XRP, ADA, DOGE, and LTC.
 - Coinbase Advanced spot: BTC/USD, ETH/USD, SOL/USD, and XRP/USD.
 - Freqtrade exchange candles are the execution truth for each venue.
+- Kraken was probed separately through its raw-trade download path; standard
+  historical klines are unavailable through its adapter, and the bounded
+  BTC/USD probe did not provide a strategy-length validation window.
 - Derived Coinbase 4-hour candles are created from Coinbase 1-hour OHLCV only
   to satisfy the strategy's higher-timeframe context. They are not native
   exchange 4-hour candles.
@@ -66,6 +69,26 @@ only 18 trades and was selected after inspecting the broader results. The
 majors result shows that adding SOL and XRP diluted the result; adding ADA,
 DOGE, and LTC restored aggregate performance. This is universe-selection
 sensitivity, not evidence that the strategy has a general crypto edge.
+
+### Buy-and-hold context on the same OKX candles
+
+The `benchmark_buy_hold.py` utility measured a one-entry/one-exit benchmark
+using the exact 1-hour candles and a 5-bps fee per side:
+
+| Pair | Net buy-and-hold return | Max drawdown |
+| --- | ---: | ---: |
+| BTC | +26.44% | 34.77% |
+| ETH | -21.57% | 65.29% |
+| SOL | -17.79% | 66.08% |
+| XRP | +311.51% | 51.05% |
+| ADA | -11.80% | 71.40% |
+| DOGE | -7.39% | 72.31% |
+| LTC | -1.11% | 55.67% |
+
+This is not a recommendation to buy and hold: the benchmark has very large
+drawdowns and benefits from knowing the full historical interval. It is a
+context check showing that the +0.82% `RegimeRouted` result is not evidence of
+capturing the broadest asset trend, especially when XRP is included.
 
 ### Cost and path-risk sensitivity
 
@@ -199,6 +222,8 @@ filled from price or another venue.
   performance guarantee.
 - `research/evaluation/walk_forward_report.py` produces labeled rolling-window
   summaries from Freqtrade exports and applies the same bootstrap protocol.
+- `research/evaluation/benchmark_buy_hold.py` compares exact venue candles to
+  a fee-adjusted one-entry/one-exit benchmark with drawdown.
 - `research/evaluation/simulate_sleeves.py` merges entry/exit timestamps,
   applies capital weights, and enforces a shared maximum-open-position limit.
 - `RegimeRoutedSpotLiquidity` adds spot-only volume/liquidity and ATR guards,
