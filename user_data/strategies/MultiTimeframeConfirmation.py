@@ -69,3 +69,15 @@ class MultiTimeframeConfirmation(IStrategy):
         dataframe["exit_short"] = dataframe["mtf_fast"].gt(dataframe["mtf_slow"]).astype(int)
         dataframe["exit_tag"] = "mtf_fast_slow_exit"
         return dataframe
+
+
+class MultiTimeframeConfirmationSpot(MultiTimeframeConfirmation):
+    """Long-only spot equivalent of the benchmark."""
+
+    can_short = False
+
+    def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+        dataframe = super().populate_entry_trend(dataframe, metadata)
+        dataframe["enter_short"] = 0
+        dataframe["enter_tag"] = np.where(dataframe["enter_long"], "mtf_confirmed_long", "")
+        return dataframe
