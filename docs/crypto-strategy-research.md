@@ -484,6 +484,27 @@ held-out result was 33 trades and -0.35% with 1.65% drawdown. The tuned files
 were kept outside the public tree so the repository defaults remain transparent
 and do not silently encode an overfit result.
 
+### Coinbase loss-reduction experiment
+
+The original `StandaloneBreakoutTrendSpot` lost 9.94% in the Coinbase
+2025-01-26 through 2025-05-01 window. A spot-only guarded variant,
+`StandaloneBreakoutTrendSpotGuarded`, requires the BTC reference pair to be
+above a causal EMA before allowing breakout entries. The simple guard reduced
+the loss to 8.81%. A 60-epoch Sharpe-oriented search over channel, breakout
+buffer, ATR limit, guard EMA, exit EMA, and stoploss produced a target-window
+result of -2.46% with 59 trades and 4.03% drawdown.
+
+The selected candidate was then held out:
+
+- Coinbase 2025-05-01 through 2025-12-02: +2.68%, 136 trades, 1.92% drawdown.
+- Binance.US 2024-06-13 through 2025-12-02: +4.95%, 155 trades, 0.73% drawdown.
+
+This is risk reduction, not a successful repair of the target window. Making
+the strategy break even there would require either overfitting the date range
+or suppressing participation until the result is trivially zero. The guarded
+variant is therefore retained as an experimental lane, while its tuned
+parameters remain outside the public tree.
+
 These results change the research priority, not the evidence standard:
 standalone breakout trend deserves more independent venues and walk-forward
 windows; scheduled rotation is a lower-turnover secondary lead; momentum and

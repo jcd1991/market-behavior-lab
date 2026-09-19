@@ -95,6 +95,7 @@ lineage.
 | `CryptoMomentumRotation` / `CryptoMomentumRotationSpot` | 1h | Long/short / long-only | Independent cross-sectional momentum lane |
 | `ScheduledPortfolioRotation` | 4h | Long-only | Lower-turnover scheduled portfolio rotation |
 | `StandaloneBreakoutTrend` / `StandaloneBreakoutTrendSpot` | 4h | Long/short / long-only | Donchian/ATR trend-following lane |
+| `StandaloneBreakoutTrendSpotGuarded` | 4h | Long-only | Spot breakout with a broad BTC trend guard |
 | `RelativeValueStatArb` | 1h | Long/short | Fixed-leader residual statistical arbitrage |
 | `FundingBasisCarry` | 1h | Long/short | Fail-closed exact-venue carry validation lane |
 | `VolatilityCrashGuard` | 1h | Long-only | Trend participation with volatility/crash gating |

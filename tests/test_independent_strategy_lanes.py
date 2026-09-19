@@ -12,6 +12,7 @@ from RelativeValueStatArb import RelativeValueStatArb
 from ScheduledPortfolioRotation import ScheduledPortfolioRotation
 from StandaloneBreakoutTrend import StandaloneBreakoutTrend
 from StandaloneBreakoutTrendSpot import StandaloneBreakoutTrendSpot
+from StandaloneBreakoutTrendSpotGuarded import StandaloneBreakoutTrendSpotGuarded
 from VolatilityCrashGuard import VolatilityCrashGuard
 from research_strategy_helpers import scheduled_bars
 
@@ -31,6 +32,7 @@ def test_new_lanes_are_independent_and_carry_can_fail_closed() -> None:
     assert ScheduledPortfolioRotation(config).can_short is False
     assert StandaloneBreakoutTrend(config).can_short is True
     assert StandaloneBreakoutTrendSpot(config).can_short is False
+    assert StandaloneBreakoutTrendSpotGuarded(config).can_short is False
     assert RelativeValueStatArb(config).can_short is True
     assert FundingBasisCarry(config).can_short is True
     assert VolatilityCrashGuard(config).can_short is False
