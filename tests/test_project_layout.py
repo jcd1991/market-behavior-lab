@@ -16,6 +16,8 @@ def test_public_layout_is_present() -> None:
         ROOT / "examples/config.backtest.binanceus.spot.example.json",
         ROOT / "user_data/strategies/RegimeRouted.py",
         ROOT / "user_data/strategies/RegimeRoutedAsiaWindow.py",
+        ROOT / "user_data/strategies/RegimeRoutedFundingFilter.py",
+        ROOT / "user_data/strategies/RegimeRoutedBasisOI.py",
         ROOT / "user_data/strategies/lib/regime_detector.py",
         ROOT / "docs/references.md",
         ROOT / "scripts/export_lab_run.py",
@@ -24,6 +26,10 @@ def test_public_layout_is_present() -> None:
         ROOT / "research/evaluation/walk_forward_report.py",
         ROOT / "research/evaluation/benchmark_buy_hold.py",
         ROOT / "user_data/strategies/market_context.py",
+        ROOT / "research/evaluation/derivative_manifest.py",
+        ROOT / "research/evaluation/derivative_features.py",
+        ROOT / "research/evaluation/liquidation_events.py",
+        ROOT / "scripts/backfill_okx_derivatives.sh",
     ]
     assert all(path.is_file() for path in expected)
 

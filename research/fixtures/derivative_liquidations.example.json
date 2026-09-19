@@ -1,0 +1,7 @@
+{
+  "schema_version": "0.1.0",
+  "status": "schema_only_fixture",
+  "source": "external_liquidation_provider_required",
+  "events": [],
+  "notes": "No liquidation events are invented. Populate only with a licensed, venue-labeled historical source before research use."
+}
