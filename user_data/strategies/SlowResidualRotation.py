@@ -359,10 +359,6 @@ class SlowResidualRotation(IStrategy):
         funding = pd.to_numeric(work.get("funding_rate"), errors="coerce")
         if not isinstance(funding, pd.Series):
             funding = pd.Series(np.nan, index=work.index, dtype=float)
-        if funding.notna().sum() == 0:
-            funding = pd.to_numeric(work.get("close"), errors="coerce")
-            if not isinstance(funding, pd.Series):
-                funding = pd.Series(np.nan, index=work.index, dtype=float)
         work["__funding"] = funding
         merged = self._merge_asof_numeric_series(base_df, work, "__funding")
         return merged.rolling(6, min_periods=2).mean()
