@@ -173,6 +173,8 @@ filled from price or another venue.
 - `research/evaluation/bootstrap_trades.py` estimates trade-outcome
   uncertainty with reproducible IID bootstrap intervals; it is not a future
   performance guarantee.
+- `research/evaluation/simulate_sleeves.py` merges entry/exit timestamps,
+  applies capital weights, and enforces a shared maximum-open-position limit.
 - `RegimeRoutedSpotLiquidity` adds spot-only volume/liquidity and ATR guards,
   plus optional UTC-session and weekend sizing.
 - `RegimeRoutedLongOnly` and `RegimeRoutedShortOnly` provide side-attribution
@@ -203,6 +205,13 @@ can materially worsen both return and drawdown. The evaluator combines closed
 trade outcomes from independent runs and does not model a synchronized
 multi-strategy allocator, shared open-trade capacity, correlated intrabar
 losses, funding, or order contention.
+
+The synchronized-capacity approximation was then run on the 70/15/15 blend.
+With a shared two-position limit it accepted 60 trades, rejected two
+overlapping entries, and returned +2.168 USDT (+0.217%). With a four-position
+limit it accepted all 62 trades and returned +2.244 USDT (+0.224%). The small
+difference indicates that capacity contention was not the main source of risk
+in this sample; sleeve quality and universe selection were.
 
 ## Next acceptance gates
 
