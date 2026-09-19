@@ -99,6 +99,11 @@ lineage.
 | `RelativeValueStatArb` | 1h | Long/short | Fixed-leader residual statistical arbitrage |
 | `FundingBasisCarry` | 1h | Long/short | Fail-closed exact-venue carry validation lane |
 | `VolatilityCrashGuard` | 1h | Long-only | Trend participation with volatility/crash gating |
+| `VolatilityConditionedReversal` | 15m | Long/short | Short-horizon reversal gated by elevated volatility |
+| `SizeLiquidityDualSignal` | 1h | Long/short | Dollar-volume liquidity proxy with momentum/reversal split |
+| `DispersionConditionedMomentum` | 4h | Long/short | Cross-sectional momentum activated by universe dispersion |
+| `MultiHorizonTrendReversal` | 1h | Long/short | Fixed multi-horizon trend and short-horizon reversal blend |
+| `BetaNeutralResidualPortfolio` | 1h | Long/short | Residual lane with a signal-level BTC beta cap |
 
 `CrossSectionalRotation_KR.py` and `spot_arch_utils.py` are supporting modules
 required by the spot allocator. They are not separate claims of venue
