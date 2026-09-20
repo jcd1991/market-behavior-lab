@@ -955,3 +955,103 @@ cryptocurrencies](https://arxiv.org/abs/1904.00890), [Coinbase's primer on
 perpetual futures](https://www.coinbase.com/institutional/research-insights/research/market-intelligence/a-primer-on-perpetual-futures),
 and [session-based momentum and reversal research for Bitcoin and
 Ethereum](https://www.mdpi.com/1911-8074/19/9/692).
+
+## External strategy validation batch
+
+The September 2026 comparison batch tested public Freqtrade strategies in a
+quarantined checkout. Their source files and original parameters were retained
+outside this MIT repository because the official strategy collection is GPL,
+the Nate Emma repository is GPL-3.0, and the other repositories did not expose
+a license that was clear enough for redistribution. The batch therefore records
+behavior and ideas, not copied source. The upstream repositories also describe
+these strategies as educational starting points whose results depend on pair,
+timeframe, timerange, and configuration.
+
+The controls used native local Binance.US candles for BTC, ETH, SOL, BNB, XRP,
+and DOGE, a 0.10% fee per side, and the full `2024-06-13` through
+`2025-12-02` window unless noted. The five-minute BinHV45 lane additionally
+used native 30m and 1h informative candles. Results below are historical
+backtests, not live performance.
+
+| External lane | Market | Original/control result | Later-window result | Bias check | Decision |
+| --- | --- | ---: | ---: | --- | --- |
+| `BinHV45_Regime_5m` | Binance.US spot | -0.91%, 221 trades, 1.46% DD | -1.24%, 135 trades | Lookahead: no bias detected | Reject for now |
+| `Supertrend` (pta compatibility) | Binance.US spot | +1.17% control; tuned +0.65%, 722 trades, 3.16% DD | tuned -2.28%, 433 trades, 3.24% DD | Lookahead: no bias detected | Reject tuned parameters |
+| `FSupertrendStrategy` (pta compatibility) | OKX perpetual | +3.70%, 706 trades, 1.13% DD | Not rerun in this batch | Not rerun | Futures-only research lead |
+| `EMAcross_4h` | Binance.US spot | +0.10% control; tuned +0.24%, 37 trades, 0.17% DD | tuned +0.05%, 15 trades, 0.17% DD | No lookahead result: too few trades; recursive differences in regime features | Weak baseline |
+| `MomentumRegimeBasket15mFast` | Binance.US spot, 3 slots | +47.36%, 72 trades, 17.78% DD | — | Lookahead run blocked by the source's slow custom data/callback path | Concentrated research lead |
+| `MomentumRegimeBasket15mLb30` | Binance.US spot, 3 slots | +84.62%, 68 trades, 15.15% DD | +11.59%, 42 trades, 14.65% DD | Bounded lookahead run blocked by the same path; not cleared | Best candidate, not validated |
+| `Solipsis_USD` | Binance.US spot | -0.69% on Q1 2025 smoke window | Full run blocked by callback/data compatibility | Not completed | Defer |
+
+The source author's BinHV45 robustness variants did not change the conclusion:
+`Downtrend` and `Persistence` were each -0.91%, while `Bounce` was -0.97%.
+The Momentum basket's source-documented 21-day and 30-day lookbacks are useful
+controlled experiments, but their apparent improvement comes with long holding
+periods, high concentration, few winners, and material drawdown. On this
+six-pair universe, the tested exit-rank variants were identical to the 21-day
+result, so they were not treated as independent evidence.
+
+The bounded tuning searches were deliberately small. EMAcross selected
+`fast_period=17`, `slow_period=52`, and `rsi_buy=47` on the first half. The
+Supertrend search selected buy multipliers/periods `(3,7), (3,7), (2,15)` and
+sell `(1,20), (3,20), (7,9)`. Both tuned sets were then evaluated on the later
+window; only EMAcross retained a small positive result, with too few trades to
+call it a robust edge.
+
+### Cross-research comparison
+
+The strongest internal reference remains the regime-aligned Donchian lane from
+the public research set: +5.25% on the full OKX perpetual window and +6.53% on
+the full Binance.US spot window, with positive but uneven walk-forward windows.
+The external batch adds two useful ideas without importing external code:
+
+- multi-timeframe trend confirmation and explicit regime gating are already
+  represented in the internal lanes and should be compared as feature toggles,
+  not pasted from GPL code;
+- slower cross-sectional momentum selection is a promising portfolio overlay,
+  but must be tested with larger, survivorship-controlled universes and capped
+  concentration before it can enhance a single-pair router.
+
+The external batch did not establish a portable profit edge. It also did not
+have measured historical spread or order-book slippage. Fee-only results are
+therefore screening results. The next cost gate is to rerun the leading lanes
+with venue-calibrated spread/slippage scenarios and require holdout survival.
+
+The modeled cost sensitivity below raises the Freqtrade fee argument from
+0.10% per side to 0.15% and 0.25% per side. It is a deliberately simple
+spread/slippage stress, not a claim about the historical fill cost:
+
+| Lane | 0.10% per side | 0.15% per side | 0.25% per side |
+| --- | ---: | ---: | ---: |
+| `BinHV45_Regime_5m` | -0.91% | -1.45% | -2.03% |
+| tuned `EMAcross_4h` | +0.24% | +0.23% | +0.21% |
+| tuned `Supertrend` | +0.65% | -1.56% | -3.66% |
+| `MomentumRegimeBasket15mLb30` | +84.62% | +80.62% | +72.97% |
+
+Momentum's apparent resilience here is not enough to promote it: the result is
+dominated by a small number of long-duration trades and a concentrated six-pair
+universe, and it still carries double-digit drawdown.
+
+All Binance.US spot candidates in this batch are long-only; there is no
+independent short leg to evaluate for them. The OKX `FSupertrendStrategy` lane
+was also run as the source's long-only futures strategy, so its +3.70% result
+must not be read as evidence for a short or long/short portfolio. The internal
+Donchian and regime-router comparisons should continue to report long and
+short legs separately when a strategy actually supports both.
+
+### Provenance links
+
+- [freqtrade-strategies](https://github.com/freqtrade/freqtrade-strategies),
+  commit `f3340ce` — GPL-3.0; educational strategies, including Supertrend.
+- [nateemma/strategies](https://github.com/nateemma/strategies), commit
+  `26f1ae3` — GPL-3.0; includes the MomentumRegimeBasket research notes.
+- [zevrichards/freqtrade-strategies](https://github.com/zevrichards/freqtrade-strategies),
+  commit `9dc9ef2` — license not clear in the inspected checkout.
+- [sevenpen/freqtrade-strategies_2024](https://github.com/sevenpen/freqtrade-strategies_2024),
+  commit `397f254` — license not clear in the inspected checkout; Solipsis was
+  only run as a compatibility smoke test.
+
+Compatibility edits used only for local testing—`pandas_ta` in place of the
+missing `technical` Supertrend helper, a current NumPy spelling, and a
+Freqtrade callback bridge—are not original-source results and are not included
+in this public repository.
