@@ -80,3 +80,19 @@ intentionally redistributed from a research paper.
 Market-data endpoints and Python libraries are implementation dependencies, not
 strategy provenance. Their links and licenses should be reviewed separately
 when the optional data adapters are added to this public repository.
+
+## Evaluated external strategy sources
+
+- [darkvolg/Trading](https://github.com/darkvolg/Trading) — GPL-3.0. Its
+  TrendRider strategy was evaluated as an external Bybit-perpetual candidate;
+  its source was not copied into this MIT repository.
+- [freqtrade/freqtrade-strategies](https://github.com/freqtrade/freqtrade-strategies)
+  and [Strategy005.py](https://github.com/freqtrade/freqtrade-strategies/blob/main/user_data/strategies/Strategy005.py)
+  — GPL-3.0. Strategy005 was run from a temporary external checkout and is
+  not redistributed here.
+- [zodboy/freqtrade-simple-mean-reversion](https://github.com/zodboy/freqtrade-simple-mean-reversion)
+  — MIT. Its general mean-reversion idea was used as a clean-license control;
+  the public strategy in this repository is an independent implementation.
+- [Analysis Pairs Trading Strategy Applied to the Cryptocurrency Market](https://doi.org/10.1007/s10614-025-11149-y)
+  — Ramos-Requena and Bağcı (2026). This supports the research motivation for
+  residual/pairs analysis; no paper text or code is redistributed.

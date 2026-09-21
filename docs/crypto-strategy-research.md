@@ -1055,3 +1055,120 @@ Compatibility edits used only for local testing—`pandas_ta` in place of the
 missing `technical` Supertrend helper, a current NumPy spelling, and a
 Freqtrade callback bridge—are not original-source results and are not included
 in this public repository.
+
+### Mix-and-match sleeve matrix
+
+I ran an equal-weight screening matrix over the full-window Binance.US spot
+exports that had positive aggregate results: `MomentumRegimeBasket15mLb30`,
+`StandaloneBreakoutTrendSpot`, `StandaloneBreakoutTrendRegimeSpot`,
+`MultiTimeframeConfirmationSpot`, `BaselineEMAADXVolatilitySpot`, `Supertrend`,
+and `EMAcross_4h`. The matrix evaluated every one-, two-, and three-sleeve
+combination using closed-trade PnL ordered by UTC close time. The local JSON
+output is ignored because it is derived from local backtest data; the reusable
+implementation is `research/evaluation/matrix_sleeves.py`.
+
+| Combination | Profit | Max drawdown | Closed trades |
+| --- | ---: | ---: | ---: |
+| `MomentumRegimeBasket15mLb30` | +84.62% | 15.15% | 68 |
+| Momentum + `StandaloneBreakoutTrendRegimeSpot` | +45.58% | 9.81% | 160 |
+| Momentum + `StandaloneBreakoutTrendSpot` | +45.29% | 9.84% | 172 |
+| Momentum + `MultiTimeframeConfirmationSpot` | +43.75% | 9.92% | 181 |
+| `StandaloneBreakoutTrendRegimeSpot` | +6.53% | 1.21% | 92 |
+| Breakout + regime breakout | +6.24% | 1.15% | 196 |
+| Breakout + regime breakout + multi-timeframe | +5.12% | 1.27% | 309 |
+
+The 2024 and 2025 close-date splits remained positive for the single
+Momentum lane and for the leading non-Momentum breakout lanes. That is a
+useful screening signal, not a forward validation: the splits reuse the same
+strategy definitions and pair universe, and the external Momentum source was
+not independently cleared for publication. The apparent improvement in
+drawdown comes from dividing the same realized sleeve returns across equal
+weights; it does not model shared capital, simultaneous open trades, pair
+overlap, order queueing, or a portfolio allocator.
+
+The strongest next implementation is therefore not to merge every strategy
+into `RegimeRouted`. It is to build a synchronized allocator that can enforce
+one wallet, one open-trade budget, pair concentration caps, and venue-specific
+costs, then retest the breakout-only and momentum-plus-breakout candidates on
+locked forward windows. Until that exists, these matrix numbers should be
+treated as research ranking evidence only.
+
+### 2026 forward check and synchronized allocator screen
+
+The available Coinbase Advanced data contains native 15-minute candles through
+2026-09-20. Coinbase does not accept `4h` as a Freqtrade timeframe, so the
+2026 breakout and RegimeRouted checks used locally aggregated 1-hour candles
+derived from that native 15-minute source. The results are not native 4-hour
+validation:
+
+| Lane | Window | Fee | Trades | Result | Max drawdown |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `StandaloneBreakoutTrendSpot` | Coinbase, 2026-01-01 to 2026-09-20 | 0.60%/side | 223 | -54.41% | 64.46% |
+| `RegimeRoutedSpot` | Coinbase, 2026-01-01 to 2026-09-20 | 0.60%/side | 1 | -0.76% | 0.76% |
+| `MomentumRegimeBasket15mLb30` | Coinbase, 2026-01-01 to 2026-09-18 | prior run cost model | 12 | +1.64% | approximately 9.5% |
+
+The Momentum result is too small to establish a 2026 edge. The breakout lane
+is a clear negative result in this test, and the RegimeRouted spot lane did not
+produce enough trades to evaluate.
+
+The reusable `research/evaluation/synchronized_allocator.py` screen then
+applied one shared $1,000 wallet, a three-position global limit, 40% per-pair
+concentration cap, pair-overlap rejection, sleeve budgets, and additional
+round-trip cost stress. A 50% Momentum / 25% breakout / 25% RegimeRouted
+allocation produced:
+
+| Additional round-trip cost | Result | Max drawdown | Accepted trades | Rejected signals |
+| ---: | ---: | ---: | ---: | ---: |
+| 0 bp | -15.01% | 20.72% | 206 | 30 |
+| 20 bp | -17.94% | 23.04% | 206 | 30 |
+| 40 bp | -20.77% | 25.30% | 206 | 30 |
+
+The Momentum plus RegimeRouted-only mix was less damaging: with 75% Momentum,
+25% RegimeRouted, and 20 bp additional round-trip cost it returned +0.14% with
+7.90% drawdown, after one overlap rejection. At a 20% pair cap it returned +0.57%
+with 6.16% drawdown, showing the risk trade-off but not creating new alpha.
+
+This allocator screen is materially more realistic than simply averaging
+independent backtest returns, but it still consumes precomputed trades rather
+than competing live signals. It does not model order-book queue position,
+partial fills, or changing Coinbase fee tiers. A portable 2026 result still
+requires fresh forward data, a second venue, and a true shared-wallet
+Freqtrade implementation.
+
+### New validation lanes: external baselines and independent cointegration
+
+This pass kept external source code outside the public MIT research set. The
+TrendRider source from `darkvolg/Trading` is GPL-3.0 and was intended for a
+Bybit USDT-perpetual lane; the local Bybit market-discovery request returned a
+403 region restriction, so no Bybit performance result is reported. A nearby
+OKX or Binance futures result would not be a Bybit result.
+
+`Strategy005` was run unchanged from the GPL-3.0 `freqtrade-strategies`
+repository. Results below are screening results with native 5-minute candles,
+fixed source parameters, and the stated fee model:
+
+| Lane | Window | Pairs | Fee | Trades | Result | Max drawdown |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| `Strategy005` | Binance.US spot, 2025-01-01 to 2025-12-05 | BTC, ETH, BNB, XRP, DOGE / USDT | 0.10%/side | 585 | -30.20% | 36.52% |
+| `Strategy005` | Coinbase Advanced spot, 2025-01-01 to 2026-01-01 | BTC, ETH, SOL / USD | 0.60%/side | 265 | -39.29% | 39.95% |
+| `SimpleMeanReversionControl` | Binance.US spot, 2025-01-01 to 2025-12-05 | BTC, ETH, BNB, XRP, DOGE / USDT | 0.10%/side | 592 | -24.46% | 25.62% |
+| `CointegrationResidual` | Binance.US spot, 2025-01-01 to 2025-12-05 | BTC, ETH, SOL, XRP, DOGE / USDT | 0.10%/side | 264 | +0.49% | 4.87% |
+
+The cointegration lane is original code in this repository. It uses a
+versioned `cointegration.v1` diagnostic contract with UTC overlap, rolling
+log-price beta, residual z-score, correlation, and half-life fields. The
+Freqtrade strategy is deliberately long-only in spot mode: it trades the
+asset residual against a BTC reference but does not pretend that one spot
+trade is a hedged two-leg portfolio. The positive result is therefore a weak
+screening lead, not proof of a market-neutral cointegration edge.
+
+The MIT mean-reversion project is used only as a clean-license control; the
+control in this repository is a small independent implementation with the
+same broad Bollinger/RSI idea, not a copied file. Both controls lost after
+costs, which is useful negative evidence. The source strategies remain in a
+temporary quarantine checkout and are not redistributed here.
+
+Coinbase 5-minute download was rate-limited while fetching a fourth pair, so
+the Coinbase result uses the three pairs successfully downloaded and must not
+be read as a full-universe result. Bybit remains an unvalidated lane until
+venue-accessible historical futures data is available.
