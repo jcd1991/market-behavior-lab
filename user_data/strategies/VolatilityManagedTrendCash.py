@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
@@ -26,6 +29,25 @@ class VolatilityManagedTrendCash(IStrategy):
     buy_vmt_min_edge = DecimalParameter(0.001, 0.050, default=0.005, decimals=3, space="buy", optimize=True)
     buy_vmt_min_liq_ratio = DecimalParameter(0.25, 2.00, default=0.50, decimals=2, space="buy", optimize=True)
     buy_vmt_min_quote_volume = IntParameter(10_000, 10_000_000, default=100_000, space="buy", optimize=False)
+
+    def load_params_from_file(self) -> dict:
+        """Share the frozen research parameters with the spot subclass.
+
+        Freqtrade resolves the parameter JSON from this module's filename,
+        while both spot and futures variants live in this module. The saved
+        research file is intentionally labeled for the spot validation lane;
+        accepting both class names keeps the frozen values reproducible for
+        the corresponding futures comparison without silently accepting an
+        unrelated parameter file.
+        """
+        filename = Path(__file__).with_suffix(".json")
+        if not filename.is_file():
+            return {}
+        params = json.loads(filename.read_text(encoding="utf-8"))
+        allowed = {"VolatilityManagedTrendCash", "VolatilityManagedTrendCashSpot"}
+        if params.get("strategy_name") not in allowed:
+            raise ValueError(f"invalid parameter file strategy: {params.get('strategy_name')!r}")
+        return params
 
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         close = pd.to_numeric(dataframe["close"], errors="coerce")
