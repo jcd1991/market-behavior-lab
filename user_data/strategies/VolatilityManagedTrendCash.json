@@ -1,0 +1,32 @@
+{
+  "strategy_name": "VolatilityManagedTrendCashSpot",
+  "params": {
+    "roi": {
+      "0": 100.0
+    },
+    "stoploss": {
+      "stoploss": -0.12
+    },
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "max_open_trades": {
+      "max_open_trades": 2
+    },
+    "buy": {
+      "buy_vmt_min_quote_volume": 100000,
+      "buy_vmt_fast": 72,
+      "buy_vmt_max_vol": 2.33,
+      "buy_vmt_min_edge": 0.001,
+      "buy_vmt_min_liq_ratio": 1.95,
+      "buy_vmt_min_score": 0.92,
+      "buy_vmt_slow": 281,
+      "buy_vmt_target_vol": 0.14
+    }
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2026-09-25 03:10:23.001557+00:00"
+}

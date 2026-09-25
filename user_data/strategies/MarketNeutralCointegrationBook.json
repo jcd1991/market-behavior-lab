@@ -1,0 +1,31 @@
+{
+  "strategy_name": "MarketNeutralCointegrationBook",
+  "params": {
+    "roi": {
+      "0": 100.0
+    },
+    "stoploss": {
+      "stoploss": -0.08
+    },
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "max_open_trades": {
+      "max_open_trades": 2
+    },
+    "buy": {
+      "buy_coint_entry_z": 1.8,
+      "buy_coint_max_half_life": 169,
+      "buy_coint_min_corr": 0.8,
+      "buy_coint_window": 272
+    },
+    "sell": {
+      "sell_coint_exit_z": 0.9
+    }
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2026-09-25 02:52:38.103885+00:00"
+}
