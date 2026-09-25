@@ -265,6 +265,12 @@ class CrossSectionalRotation(IStrategy):
         right = src_df[["__date", value_col]].copy().dropna(subset=["__date"]).sort_values("__date")
         if right.empty:
             return out
+        # Feather/parquet readers can preserve different datetime resolutions
+        # (for example datetime64[ms] for candles and datetime64[ns] for
+        # derivative series). merge_asof requires matching timezone-aware
+        # dtypes, so normalize both sides before joining.
+        left["__date"] = pd.to_datetime(left["__date"], utc=True).astype("datetime64[ns, UTC]")
+        right["__date"] = pd.to_datetime(right["__date"], utc=True).astype("datetime64[ns, UTC]")
         merged = pd.merge_asof(left, right, on="__date", direction="backward")
         out.loc[left.index] = pd.to_numeric(merged[value_col], errors="coerce").values
         return out

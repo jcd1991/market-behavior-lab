@@ -55,3 +55,8 @@ The primary strategy creates a large feature set, so pandas may emit
 DataFrame-fragmentation performance warnings during indicator construction.
 That is a known implementation trade-off in this experimental artifact, not a
 claim that the strategy is production-optimized.
+
+The latest seven-part free-data re-evaluation is recorded in
+[`revaluation-2026-09-25.md`](revaluation-2026-09-25.md). It includes the
+frozen-parameter matrix, walk-forward windows, modeled cost sensitivity, data
+coverage, and the lanes that remain blocked by incomplete venue history.

@@ -81,6 +81,41 @@ The fetcher fails closed on invalid ZIP/JSON responses, preserves checksums,
 and records access failures instead of substituting another venue. Raw files
 remain ignored by Git.
 
+## Normalize an archive for a backtest
+
+Downloaded archives can be converted to the six-column Freqtrade candle
+contract with `scripts/normalize_free_historical.py`. The output keeps UTC
+timestamps and writes a sidecar manifest containing the provider, pair,
+market type, input files, and source label. It refuses to collapse a futures
+pair into a spot pair, and it does not combine providers.
+
+For example:
+
+```bash
+python scripts/normalize_free_historical.py \
+  --provider binance \
+  --input user_data/data/historical/raw/binance/klines/BTCUSDT-1m-2026-08.zip \
+  --output user_data/data/historical/normalized/binance-global/BTC_USDT-1m.feather \
+  --pair BTC/USDT \
+  --market-type spot \
+  --source binance-global-public-archive
+```
+
+The official Binance archive in this example is global Binance, not
+Binance.US. It can support a data-format or strategy-screening check, but it
+must not be labeled as Binance.US execution history. OKX historical candles
+can be normalized the same way, with `--provider okx` and a pair such as
+`BTC/USDT:USDT`. A normalized file is still an input artifact; execution
+truth requires the exact venue, pair, fee tier, spread, slippage, and time
+window to be documented together.
+
+OKX funding, mark, index, and open-interest responses can be normalized into
+separate Feather files with `scripts/normalize_okx_derivatives.py`. They are
+kept separate so a missing index or funding series remains unavailable in the
+research result. A short public API page is not a complete historical series;
+the sidecar therefore remains marked `execution_truth: false` until coverage
+and time alignment are independently verified.
+
 ## Free sources
 
 | Source | Useful supplementation | Important boundary |
