@@ -27,6 +27,9 @@ export = [
   "pandas>=2.0",
   "pyarrow>=14",
 ]
+capture = [
+  "websockets>=13,<17",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

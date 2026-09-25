@@ -320,6 +320,23 @@ The acceptance scripts can also be run directly:
   tests/acceptance/qsize_acceptance_tests.py
 ```
 
+## Free market-data supplementation
+
+The research foundation includes a bounded, credential-free public WebSocket
+capture helper for Coinbase, OKX, Binance global, and Kraken:
+
+```bash
+python -m pip install -e ".[capture]"
+python scripts/capture_public_data.py \
+  --venue coinbase --pair BTC/USD --pair ETH/USD --seconds 60
+```
+
+Raw sessions are stored below `user_data/data/microstructure/raw/` and are
+ignored by Git. They supplement spread, depth, trade-flow, and derivatives
+research; they do not replace venue-matched Freqtrade execution candles. See
+[Free crypto market-data supplementation](docs/free-data-sources.md) for
+source choices, limits, and provenance rules.
+
 ## External research and data references
 
 The custom implementation is original project code informed by public research.
