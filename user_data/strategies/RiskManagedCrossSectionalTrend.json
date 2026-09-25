@@ -1,0 +1,32 @@
+{
+  "strategy_name": "RiskManagedCrossSectionalTrendSpot",
+  "params": {
+    "roi": {
+      "0": 100.0
+    },
+    "stoploss": {
+      "stoploss": -0.2
+    },
+    "trailing": {
+      "trailing_stop": false,
+      "trailing_stop_positive": null,
+      "trailing_stop_positive_offset": 0.0,
+      "trailing_only_offset_is_reached": false
+    },
+    "max_open_trades": {
+      "max_open_trades": 2
+    },
+    "buy": {
+      "buy_rct_min_quote_volume": 100000,
+      "buy_rct_long_rank": 0.71,
+      "buy_rct_min_edge": 0.007,
+      "buy_rct_min_liq_ratio": 0.92,
+      "buy_rct_momentum_bars": 126,
+      "buy_rct_sharpe_bars": 565,
+      "buy_rct_short_rank": 0.3,
+      "buy_rct_target_vol": 0.55
+    }
+  },
+  "ft_stratparam_v": 1,
+  "export_time": "2026-09-25 03:10:03.574428+00:00"
+}

@@ -1172,3 +1172,147 @@ Coinbase 5-minute download was rate-limited while fetching a fourth pair, so
 the Coinbase result uses the three pairs successfully downloaded and must not
 be read as a full-universe result. Bybit remains an unvalidated lane until
 venue-accessible historical futures data is available.
+
+### 2026-09 structural strategy lanes: tuning and holdout tests
+
+This pass added four structurally different research lanes:
+
+| Lane | Role | Market contract |
+| --- | --- | --- |
+| `MarketNeutralCointegrationBook` | residual signal with long and short legs | futures-oriented; a portfolio layer is required for a true hedge |
+| `RiskManagedCrossSectionalTrend` | ranked momentum with inverse-volatility sizing | spot subclass and futures-capable base |
+| `VolatilityManagedTrendCash` | trend exposure with a high-volatility cash state | spot subclass and futures-capable base |
+| `cash_carry.py` | same-venue spot/perpetual carry evaluator | diagnostic only; not a one-position Freqtrade strategy |
+
+The first three were backtested with Freqtrade on the exact local venue data:
+
+| Lane | Venue / window | Baseline | Tuned holdout | Holdout drawdown | Result after 40 bp modeled cost |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `MarketNeutralCointegrationBook` | OKX futures, 2024-06-17 to 2025-12-02 | +1.04% | -0.35% | 1.48% | -0.57% |
+| `RiskManagedCrossSectionalTrendSpot` | Binance.US spot, 2024-02-03 to 2025-12-05 | +3.27% | +1.03% | 1.07% | -0.39% |
+| `VolatilityManagedTrendCashSpot` | Binance.US spot, 2024-01-11 to 2025-12-05 | +1.78% | +0.63% | 0.58% | +0.29% |
+
+Parameters were tuned only on an earlier training window with a bounded
+12-epoch Freqtrade Hyperopt run and then frozen before the holdout. The tuned
+values are committed in the strategy parameter JSON files so the test can be
+reproduced. The holdout is not a 2026 forward test and should not be described
+as portable profitability.
+
+The spot lanes retained a positive holdout under the zero-additional-cost
+model, but the edge is thin. The 40 bp stress model is an explicit per-trade
+cost deduction, not a venue quote or a claim about the user's execution tier:
+
+| Lane | 0 bp | 10 bp | 20 bp | 40 bp |
+| --- | ---: | ---: | ---: | ---: |
+| Cointegration | -0.35% | -0.40% | -0.46% | -0.57% |
+| Cross-sectional trend | +1.03% | +0.68% | +0.32% | -0.39% |
+| Volatility-managed trend | +0.63% | +0.55% | +0.46% | +0.29% |
+
+Trade-order Monte Carlo was run with 5,000 permutations on each frozen holdout.
+It found 0% profitable paths for the negative cointegration holdout and 100%
+profitable reorderings for each positive spot holdout. This only changes the
+ordering of already observed trade outcomes; it does not create evidence of
+an edge, add market scenarios, or replace walk-forward validation. The positive
+spot lanes had approximately 1.52% and 1.01% 95th-percentile max drawdown in
+the reorderings, respectively, while both showed a 95th-percentile losing
+streak of about 20 trades.
+
+The carry evaluator intentionally fails closed. The local cache has separate
+Binance.US-like spot candles and OKX-style futures candles, but no same-venue
+spot/perpetual pair with a matching index series. The available funding files
+begin in 2026-06, outside the cached 2024-2025 futures test window. It is
+therefore not valid to manufacture a carry result by joining venues or by
+using CoinGecko as a substitute for an exchange index. The evaluator reports
+venue mismatch and missing index/funding coverage instead.
+
+Bottom line: cross-sectional trend and volatility-managed trend are useful
+research leads because they remained positive on a frozen local holdout, but
+neither clears a cost-aware or multi-venue portability gate. The cointegration
+signal did not hold out of sample, and the current implementation is a
+single-leg proxy rather than a capital-neutral pair book. The next gate is a
+true shared-wallet implementation, native same-venue carry data, and a locked
+2026 forward window before any additional parameter search.
+
+### 2026-09 cost, liquidity, allocator, and two-leg follow-up
+
+The next pass added execution-aware gates to the two strongest spot lanes.
+Entries now require a trailing return proxy to exceed the configured fee plus
+research spread, slippage, and safety assumptions. The default research floor
+is two times the configured fee plus 30 basis points. The default liquidity
+gate requires at least 100,000 units of rolling quote volume and current quote
+volume at least 50% of its 48-hour rolling median. These are screening
+assumptions, not live order-book measurements; they can be overridden locally
+with `research_fee_rate`, `research_spread_bps`, `research_slippage_bps`, and
+`research_safety_bps`.
+
+The filters reduced turnover and improved the historical Binance.US screen
+before retuning:
+
+| Lane | Earlier screen | Cost/liquidity screen | Trades | Drawdown |
+| --- | ---: | ---: | ---: | ---: |
+| `RiskManagedCrossSectionalTrendSpot` | +3.27% | +3.78% | 199 | 0.56% |
+| `VolatilityManagedTrendCashSpot` | +1.78% | +2.47% | 124 | 0.96% |
+
+The new parameters were tuned only on pre-2026 Binance.US data with a bounded
+20-epoch Hyperopt run, then frozen:
+
+- Cross-sectional: 126-hour momentum, 565-hour Sharpe window, 0.71 long rank,
+  0.30 short rank, 0.7% minimum edge, 0.92 liquidity ratio, 0.55 target vol.
+- Volatility-managed: 72/281-hour fast/slow trend, 0.92 minimum score, 2.33
+  maximum annualized volatility, 0.1% minimum edge, 1.95 liquidity ratio, and
+  0.14 target vol.
+
+Frozen holdout and forward results:
+
+| Lane | Venue / window | Trades | Result | Max drawdown |
+| --- | --- | ---: | ---: | ---: |
+| Cross-sectional | Binance.US, 2024-12-01 to 2025-12-05 | 115 | +1.03% | 1.05% |
+| Volatility-managed | Binance.US, 2024-12-01 to 2025-12-05 | 48 | -0.02% | 0.38% |
+| Cross-sectional | Coinbase Advanced, 2026-02-03 to 2026-09-20 | 72 | -10.30% | 10.99% |
+| Volatility-managed | Coinbase Advanced, 2026-01-11 to 2026-09-20 | 40 | +1.08% | 2.81% |
+
+Coinbase data was downloaded natively at 1-hour resolution for BTC/USD,
+ETH/USD, and SOL/USD. Freqtrade/CCXT reports Coinbase Advanced as usable but
+not officially supported by the Freqtrade development team, so this is a
+compatibility validation rather than a support claim. The 2026 Coinbase result
+uses a 0.60% per-side fee assumption from the existing validation config and
+was not used for parameter selection. The positive volatility result is too
+small and too venue-specific to establish a portable edge; the cross-sectional
+lane is a clear forward rejection in this test.
+
+The existing synchronized allocator was used as a shared-wallet screen over
+the frozen Binance.US holdout. It applied equal 50/50 lane budgets, two open
+positions, pair-overlap rejection, and a 25% or 40% concentration cap. The
+cap did not bind because the two-position budget was already tighter:
+
+| Extra round-trip cost | Pair cap | Result | Max drawdown | Accepted / rejected |
+| ---: | ---: | ---: | ---: | ---: |
+| 20 bp | 25% | -17.78% | 30.09% | 109 / 54 |
+| 20 bp | 40% | -17.78% | 30.09% | 109 / 54 |
+| 40 bp | 25% | -22.12% | 31.93% | 109 / 54 |
+
+This allocator intentionally resizes the independent trade exports into a
+single wallet and therefore exposes stop-loss and overlap risk that separate
+backtests hide. It is a conservative portfolio screen, not a production
+Freqtrade portfolio manager.
+
+The cointegration lane now has an independent two-leg simulator in
+`research/evaluation/cointegration_book.py`. It opens both legs at a signal,
+uses the rolling beta to normalize asset and reference notionals, applies
+round-trip costs, and marks returns from the next candle. On the OKX futures
+ETH/BTC pair, a small training grid found +0.72% over 2024-06-01 to 2025-01-01
+at a 10 bp round-trip assumption. Frozen 2025 holdout results were -0.80% for
+the default parameters and -1.59% for the tuned parameters. The wider default
+screen against BTC was also negative for ETH (-0.80%), SOL (-0.87%), ADA
+(-1.61%), DOGE (-3.20%), and LTC (-1.78%); XRP (+0.57%) and LINK (+0.50%) had
+too few trades to qualify as evidence. This is a real two-leg simulation, but
+it still does not model borrow, funding, queue position, or synchronized
+execution failure.
+
+Conclusion: execution-aware filters helped historical fit but did not create
+portable profitability. The best current lead is the volatility-managed lane,
+which was positive on Coinbase 2026 but nearly flat on the Binance.US holdout.
+The cross-sectional lane failed Coinbase 2026. The two-leg cointegration book
+failed the frozen holdout. No lane should be promoted to live trading without
+another locked forward window, measured execution costs, and a genuine
+shared-wallet implementation.
