@@ -71,6 +71,22 @@ The old internal project name was **aitrader**. The strategy code was migrated
 to the Freqtrade runtime; `aitrader` is retained only as historical project
 lineage.
 
+## Research roadmap: build the evidence first
+
+The next work is execution-aware research rather than another indicator sweep.
+The project now includes a shared microstructure contract for permitted
+one-minute trades and L2 order books, venue fee tiers, point-in-time universe
+membership, shared-wallet replay, and expected-versus-realized fill
+reconciliation. It also includes a same-venue cash-and-carry evaluator, a
+point-in-time cross-sectional portfolio lane, a frozen multi-sleeve evaluator,
+and an order-flow scaffold that fails closed without event data.
+
+Read the [research foundation](docs/research-foundation.md) for the data
+contract, promotion gates, and the distinction between Freqtrade candle truth
+and optional event-driven execution research. The market-making lane is not
+enabled by OHLCV alone, and carry results are not valid when spot, perpetual,
+funding, or index data come from different venues.
+
 ## Strategy catalogue
 
 | Strategy | Timeframe | Side | Role |
