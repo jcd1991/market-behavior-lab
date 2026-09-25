@@ -1316,3 +1316,54 @@ The cross-sectional lane failed Coinbase 2026. The two-leg cointegration book
 failed the frozen holdout. No lane should be promoted to live trading without
 another locked forward window, measured execution costs, and a genuine
 shared-wallet implementation.
+
+### 2026-09 research foundation and priority lanes
+
+This pass implemented the next research priorities as reusable, fail-closed
+infrastructure instead of another round of parameter tuning.
+
+**Foundation.** `research/evaluation/microstructure.py` defines the
+`microstructure.v1` contract for UTC one-minute trades and L2 order-book
+snapshots. It preserves venue, canonical pair, spot/futures market type,
+source, depth, spread, and notional fields. The normalizer and
+`scripts/normalize_microstructure.py` support permitted venue exports without
+adding raw data to the public repository. `VenueCostModel` represents
+maker/taker tiers; `point_in_time_universe` prevents future listings from
+leaking into earlier rankings.
+
+`research/evaluation/execution_foundation.py` adds one-wallet trade replay with
+overlap, capacity, concentration, fee, and optional order-book-depth gates. It
+also produces an explicit expected-versus-realized fill reconciliation report
+for dry-run comparison. These tools are portfolio screens, not exchange order
+routers.
+
+**Same-venue carry.** `cash_carry.py` now accounts for spot-long/perpetual-
+short convergence, positive funding received by the short leg, borrow,
+collateral carry, round-trip cost, optional margin-buffer observations, and
+adverse basis/venue-failure stress. It still rejects venue mismatch and missing
+index/funding overlap. The local cache remains incomplete for a long same-venue
+spot/perpetual history, so no new carry profitability claim is made.
+
+**Cross-sectional portfolio.** `cross_sectional_portfolio.py` is an offline
+portfolio lane combining momentum, reversal, liquidity, inverse-volatility
+sizing, rolling BTC beta control, point-in-time membership, rebalance turnover,
+and concentration caps. It runs spot-only or long/short, but it is not merged
+into `RegimeRouted` until frozen multi-window evidence shows that the allocator
+improves after venue costs.
+
+**Frozen ensemble.** `volatility_ensemble.py` evaluates
+`VolatilityManagedTrendCash`, breakout, and multi-timeframe confirmation as
+separate sleeves under a shared wallet. It applies event ordering, pair
+overlap rejection, capacity, sleeve budgets, and costs. It does not select the
+best sleeve after seeing the result.
+
+**Order flow.** `orderflow_market_making.py` validates that both timestamped
+trades and L2 books exist, then provides a small passive-quote sensitivity
+replay. It fails closed without event data and is not execution evidence until
+queue priority, latency, partial fills, cancellations, and outage handling are
+implemented.
+
+The aggregate conclusion is unchanged: the current research has identified
+venue-specific and cost-sensitive screening leads, not a portable profit
+engine. The next promotion gate is complete same-venue data, frozen
+walk-forward windows, shared-wallet accounting, and dry-run fill reconciliation.
