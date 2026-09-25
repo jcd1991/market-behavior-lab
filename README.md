@@ -337,6 +337,25 @@ research; they do not replace venue-matched Freqtrade execution candles. See
 [Free crypto market-data supplementation](docs/free-data-sources.md) for
 source choices, limits, and provenance rules.
 
+For bounded historical downloads from free public archives and APIs:
+
+```bash
+python scripts/fetch_free_historical.py binance \
+  --market-type spot --dataset klines --symbol BTCUSDT --interval 1m \
+  --month 2026-08 --verify-checksum
+
+python scripts/fetch_free_historical.py okx \
+  --dataset funding-rate-history --inst-id BTC-USDT-SWAP --limit 100
+
+python scripts/fetch_free_historical.py okx \
+  --dataset market-data-history --module 2 --inst-type SWAP \
+  --inst-family-list BTC-USDT --date-aggr-type daily \
+  --begin 1788220800000 --end 1788307200000 --download-links
+```
+
+Historical files are stored below `user_data/data/historical/raw/`, with a
+manifest containing the source URL, request, checksum, and access status.
+
 ## External research and data references
 
 The custom implementation is original project code informed by public research.

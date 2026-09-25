@@ -43,6 +43,7 @@ def test_public_layout_is_present() -> None:
         ROOT / "docs/research-foundation.md",
         ROOT / "scripts/normalize_microstructure.py",
         ROOT / "scripts/capture_public_data.py",
+        ROOT / "scripts/fetch_free_historical.py",
         ROOT / "docs/free-data-sources.md",
         ROOT / "user_data/strategies/RelativeValueGHE.py",
         ROOT / "user_data/strategies/ghe.py",
