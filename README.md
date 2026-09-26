@@ -87,6 +87,39 @@ and optional event-driven execution research. The market-making lane is not
 enabled by OHLCV alone, and carry results are not valid when spot, perpetual,
 funding, or index data come from different venues.
 
+The latest implementation pass is documented in the [recommended profit lanes
+report](docs/recommended-profit-lanes-2026-09-25.md). It adds a multi-horizon
+breakout ensemble, a crash-state sizing overlay, explicit liquidity/cost
+gates, and a liquid cross-sectional momentum lane. The report separates native
+Freqtrade results from the independent shared-wallet screening evaluator.
+
+The revised seven-sleeve pass is documented in the [revised profit sleeves
+report](docs/revised-profit-sleeves-2026-09-25.md). It adds data-gated
+cash-and-carry, a market-neutral two-leg residual screen, weekly liquid
+momentum, crash-state allocation, execution gates, a lead-lag diagnostic, and
+an options-chain contract. The event-driven sleeves fail closed when the
+required historical trades, books, funding, or option marks are unavailable.
+
+The shared-wallet comparison is recorded in the [sleeve synergy
+screen](docs/sleeve-synergy-2026-09-25.md). Its current candidate is the
+earlier momentum lane paired with one crash-state breakout sleeve; redundant
+breakout copies and the negative weekly-momentum holdout remain excluded.
+
+The broader allocator matrix and its frozen tuning replay are documented in
+the [synergistic sleeve matrix report](docs/synergistic-sleeve-matrix-2026-09-26.md).
+It tests volatility-managed cash, cross-sectional trend, liquidity gating,
+volatility targeting, cash reserves, and a newly acquired Binance Global
+same-venue carry sample without mixing those results into the Binance.US
+spot execution lane.
+
+The current promotion gate is documented in the [portfolio validation gate
+report](docs/portfolio-validation-gate-2026-09-26.md). It adds synchronized
+shared-wallet replay, locked-forward testing, trade/pair/month concentration,
+seeded path-risk diagnostics, and an explicit third-venue decision. The
+current lead passes the shared-wallet screen but is not promoted: the 2026
+forward sample is small and concentrated, and the exact winner source still
+needs to be restored before an OKX replay can be called venue validation.
+
 ## Strategy catalogue
 
 | Strategy | Timeframe | Side | Role |
@@ -112,6 +145,13 @@ funding, or index data come from different venues.
 | `ScheduledPortfolioRotation` | 4h | Long-only | Lower-turnover scheduled portfolio rotation |
 | `StandaloneBreakoutTrend` / `StandaloneBreakoutTrendSpot` | 4h | Long/short / long-only | Donchian/ATR trend-following lane |
 | `StandaloneBreakoutTrendSpotGuarded` | 4h | Long-only | Spot breakout with a broad BTC trend guard |
+| `BreakoutEnsembleSpot` | 4h | Long-only | Multi-horizon Donchian breakout ensemble |
+| `BreakoutEnsembleSpotSlow` | 4h | Long-only | Frozen slower-horizon forward-test candidate |
+| `CostAwareBreakoutEnsembleSpot` | 4h | Long-only | Breakout ensemble with liquidity and expected-move gates |
+| `LiquidMomentumSpot` | 4h | Long-only | Liquid cross-sectional momentum research lane |
+| `LiquidMomentumWeeklySpot` | 4h | Long-only | Slower weekly-rebalance momentum revision |
+| `BreakoutCrashStateSpot` | 4h | Long-only | Breakout ensemble with BTC crash-state suppression and sizing |
+| `RiskManagedCrossSectionalTrendSpotTuned` | 1h | Long-only | Separate 2024-tuned cross-sectional research candidate; not promoted |
 | `RelativeValueStatArb` | 1h | Long/short | Fixed-leader residual statistical arbitrage |
 | `FundingBasisCarry` | 1h | Long/short | Fail-closed exact-venue carry validation lane |
 | `VolatilityCrashGuard` | 1h | Long-only | Trend participation with volatility/crash gating |

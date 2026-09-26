@@ -117,14 +117,21 @@ def binance_plan(args: argparse.Namespace) -> FetchPlan:
         period_path = f"daily/{dataset}/{symbol}"
     else:
         raise ValueError("Binance requires --month or --date")
-    if dataset == "klines":
+    if dataset in {"klines", "indexPriceKlines", "markPriceKlines"}:
         if not args.interval:
             raise ValueError("Binance klines require --interval")
         period_path += f"/{args.interval}"
-        filename = f"{symbol}-{args.interval}-{period}.zip"
+        archive_filename = f"{symbol}-{args.interval}-{period}.zip"
     else:
-        filename = f"{symbol}-{dataset}-{period}.zip"
-    url = f"{root}/{period_path}/{filename}"
+        archive_filename = f"{symbol}-{dataset}-{period}.zip"
+    # Spot and USD-M futures use the same archive naming convention on the
+    # public host.  Keep the local raw-data namespace collision-free so a
+    # futures download cannot overwrite a spot archive (or its manifest).
+    if args.market_type == "spot":
+        filename = f"spot-{archive_filename}"
+    else:
+        filename = f"{args.futures_market}-{archive_filename}"
+    url = f"{root}/{period_path}/{archive_filename}"
     return FetchPlan(
         "binance",
         dataset,
@@ -410,7 +417,11 @@ def build_parser() -> argparse.ArgumentParser:
     binance = subparsers.add_parser("binance")
     binance.add_argument("--market-type", choices=("spot", "futures"), default="spot")
     binance.add_argument("--futures-market", choices=("um", "cm"), default="um")
-    binance.add_argument("--dataset", choices=("klines", "aggTrades", "trades"), required=True)
+    binance.add_argument(
+        "--dataset",
+        choices=("klines", "indexPriceKlines", "markPriceKlines", "fundingRate", "aggTrades", "trades"),
+        required=True,
+    )
     binance.add_argument("--symbol", required=True)
     binance.add_argument("--interval")
     binance.add_argument("--month")

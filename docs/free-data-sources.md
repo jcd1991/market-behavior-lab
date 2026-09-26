@@ -35,6 +35,16 @@ python scripts/fetch_free_historical.py binance \
   --market-type spot --dataset klines --symbol BTCUSDT --interval 1m \
   --month 2026-08 --verify-checksum
 
+# Binance USD-M perpetual index, mark, and funding archives
+python scripts/fetch_free_historical.py binance \
+  --market-type futures --futures-market um \
+  --dataset indexPriceKlines --symbol BTCUSDT --interval 1m \
+  --month 2026-08 --verify-checksum
+python scripts/fetch_free_historical.py binance \
+  --market-type futures --futures-market um \
+  --dataset fundingRate --symbol BTCUSDT \
+  --month 2026-08 --verify-checksum
+
 # OKX public historical endpoints
 python scripts/fetch_free_historical.py okx \
   --dataset history-candles --inst-id BTC-USDT-SWAP --bar 1m --limit 100
@@ -94,7 +104,7 @@ For example:
 ```bash
 python scripts/normalize_free_historical.py \
   --provider binance \
-  --input user_data/data/historical/raw/binance/klines/BTCUSDT-1m-2026-08.zip \
+  --input user_data/data/historical/raw/binance/klines/spot-BTCUSDT-1m-2026-08.zip \
   --output user_data/data/historical/normalized/binance-global/BTC_USDT-1m.feather \
   --pair BTC/USDT \
   --market-type spot \
@@ -108,6 +118,20 @@ can be normalized the same way, with `--provider okx` and a pair such as
 `BTC/USDT:USDT`. A normalized file is still an input artifact; execution
 truth requires the exact venue, pair, fee tier, spread, slippage, and time
 window to be documented together.
+
+Binance index, mark, and funding archives use the separate
+`scripts/normalize_binance_derivatives.py` helper. It writes derivative
+columns and manifests without pretending that public archive data is
+execution truth:
+
+```bash
+python scripts/normalize_binance_derivatives.py \
+  --kind fundingRate \
+  --input user_data/data/historical/raw/binance/fundingRate/um-BTCUSDT-fundingRate-2026-08.zip \
+  --output user_data/data/historical/normalized/binance-global/BTC_USDT_USDT-funding-2026-08.feather \
+  --pair BTC/USDT:USDT \
+  --source binance-global-public-archive
+```
 
 OKX funding, mark, index, and open-interest responses can be normalized into
 separate Feather files with `scripts/normalize_okx_derivatives.py`. They are

@@ -27,6 +27,23 @@ def test_binance_monthly_url_and_filename() -> None:
         )
     )
     assert plan.url.endswith("/spot/monthly/klines/BTCUSDT/1m/BTCUSDT-1m-2026-08.zip")
+    assert plan.output_name == "spot-BTCUSDT-1m-2026-08.zip"
+
+
+def test_binance_spot_and_futures_local_names_are_distinct() -> None:
+    common = dict(
+        symbol="BTCUSDT",
+        futures_market="um",
+        dataset="klines",
+        interval="1m",
+        month="2026-08",
+        date=None,
+    )
+    spot = binance_plan(namespace(market_type="spot", **common))
+    futures = binance_plan(namespace(market_type="futures", **common))
+    assert spot.output_name != futures.output_name
+    assert futures.output_name.startswith("um-")
+    assert futures.url.endswith("/futures/um/monthly/klines/BTCUSDT/1m/BTCUSDT-1m-2026-08.zip")
 
 
 def test_bitmex_public_archive_url() -> None:
