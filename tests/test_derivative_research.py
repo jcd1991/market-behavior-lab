@@ -17,6 +17,14 @@ def test_basis_oi_features_are_backward_only_and_nullable():
     assert bool(out["basis_oi_capitulation"].iloc[2])
 
 
+def test_normalized_mark_and_index_columns_are_consumed():
+    candles = pd.DataFrame({"date": pd.date_range("2025-01-01", periods=2, freq="h"), "close": [100, 101]})
+    mark = pd.DataFrame({"date": candles.date, "mark_close": [100.1, 101.2]})
+    index = pd.DataFrame({"date": candles.date, "index_close": [100, 101]})
+    out = add_basis_oi_features(candles, mark=mark, index=index)
+    assert out["basis"].notna().all()
+
+
 def test_funding_policy_fails_closed_for_missing_values():
     funding = pd.Series([-.001, .001, None, .02])
     assert funding_policy(funding, side="long").tolist() == [True, False, False, False]

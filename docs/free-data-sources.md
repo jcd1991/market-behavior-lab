@@ -45,6 +45,12 @@ python scripts/fetch_free_historical.py binance \
   --dataset fundingRate --symbol BTCUSDT \
   --month 2026-08 --verify-checksum
 
+# Binance USD-M daily derivatives metrics (5-minute observations inside each
+# daily archive: open interest, open-interest value, and ratio fields)
+python scripts/fetch_free_historical.py binance \
+  --market-type futures --futures-market um \
+  --dataset metrics --symbol BTCUSDT --date 2026-08-01
+
 # OKX public historical endpoints
 python scripts/fetch_free_historical.py okx \
   --dataset history-candles --inst-id BTC-USDT-SWAP --bar 1m --limit 100
@@ -133,6 +139,24 @@ python scripts/normalize_binance_derivatives.py \
   --source binance-global-public-archive
 ```
 
+The same normalizer accepts `--kind metrics`. To combine a run of daily
+metrics archives while retaining their native 5-minute observation frequency,
+use `scripts/normalize_binance_metrics_series.py`:
+
+```bash
+python scripts/normalize_binance_metrics_series.py \
+  --input-dir user_data/data/historical/raw/acquisition-2026-09-28/binance/metrics \
+  --symbol BTCUSDT \
+  --pair BTC/USDT:USDT \
+  --output user_data/data/historical/normalized/binance-global/BTC_USDT_USDT-metrics-5m.feather \
+  --source binance-global-public-archive-metrics
+```
+
+The free metrics archive is useful for open-interest context and positioning
+features, but it is not a liquidation ledger, margin-history feed, or proof of
+available execution liquidity. It must not be upsampled into minute-level
+truth or used to fabricate a liquidation buffer.
+
 OKX funding, mark, index, and open-interest responses can be normalized into
 separate Feather files with `scripts/normalize_okx_derivatives.py`. They are
 kept separate so a missing index or funding series remains unavailable in the
@@ -146,7 +170,7 @@ and time alignment are independently verified.
 | --- | --- | --- |
 | [Coinbase Advanced public WebSocket](https://docs.cdp.coinbase.com/coinbase-app/advanced-trade-apis/websocket/websocket-overview) | Spot `level2`, `market_trades`, ticker, and candle streams for current Coinbase spread, depth, and trade-flow observations. | Current stream, not a complete historical L2 archive. Track sequence gaps and reconnects. |
 | [OKX public WebSocket and REST API](https://www.okx.com/docs-v5/) | Public books, trades, candles, mark price, funding, index, and open-interest endpoints/channels. The public historical-market-data query can return downloadable trades, 1-minute candles, and large L2 files. | Instrument IDs and regional endpoints matter. Historical backfill is still expanding; query availability before downloading. |
-| [Binance Public Data](https://github.com/binance/binance-public-data/) | Official global Binance spot/futures 1-minute klines, trades, aggregate trades, and related archives for longer screening windows. | Global Binance is not Binance.US. Audit checksums and documented archive gaps. |
+| [Binance Public Data](https://github.com/binance/binance-public-data/) | Official global Binance spot/futures 1-minute klines, trades, aggregate trades, index/mark archives, funding archives, and daily derivatives metrics with open interest and ratio fields. | Global Binance is not Binance.US. Metrics are observed at their native cadence and do not provide complete historical margin or liquidation state. Audit checksums and documented archive gaps. |
 | [Kraken WebSocket API](https://support.kraken.com/articles/360022326871-kraken-websocket-api-frequently-asked-questions) | Public spot book, trade, and OHLC streams as a third-venue current-feed supplement. | WebSocket is current data; historical reconstruction needs REST or a separately permitted archive. |
 | [Kraken downloadable trade archive](https://support.kraken.com/in/articles/360047543791-downloadable-historical-market-data-time-and-sales-) | Full public time-and-sales archives by currency pair, distributed as quarterly ZIP files. | The current full quarter is large and includes every pair; the fetcher supports it but does not download it by default. |
 | [BitMEX public data](https://public.bitmex.com/) | Daily public trade and quote archives in S3-compatible paths. | Derivatives venue; daily files are not equivalent to full L2 order-book reconstruction. |

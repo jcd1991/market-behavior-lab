@@ -120,6 +120,18 @@ current lead passes the shared-wallet screen but is not promoted: the 2026
 forward sample is small and concentrated, and the exact winner source still
 needs to be restored before an OKX replay can be called venue validation.
 
+The latest Binance-labelled sleeve refresh and multi-strategy shared-wallet
+replay are documented in the [Binance sleeve refresh report](docs/binance-sleeve-refresh-2026-09-28.md).
+The expanded free derivatives panel and its coverage gate are recorded in the
+[free derivatives acquisition report](docs/free-derivatives-acquisition-2026-09-28.md).
+It includes a locked 2026 forward check and the procedure for adding new
+strategies as independently costed allocator sleeves.
+
+The next payoff-source investigation is documented in the [hedged profit lanes
+report](docs/hedged-profit-lanes-2026-09-28.md). It adds strict same-venue
+cash-and-carry and true two-leg residual-hedging audits, while keeping
+incomplete history fail-closed.
+
 ## Strategy catalogue
 
 | Strategy | Timeframe | Side | Role |
@@ -340,6 +352,12 @@ into backtest candles:
 ```
 
 ## Research checks
+
+The latest ordered profitability screen is documented in
+[`docs/practical-profitability-order-2026-09-28.md`](docs/practical-profitability-order-2026-09-28.md).
+It covers the reconstructed momentum lane, same-venue carry, and the
+cost-aware cross-sectional allocator, with the provenance and holdout limits
+kept explicit.
 
 The repository includes small, dependency-light checks for the reusable research
 helpers:

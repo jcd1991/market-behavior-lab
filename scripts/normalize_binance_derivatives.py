@@ -51,6 +51,35 @@ def normalize(path: Path, *, kind: str, pair: str, source: str) -> tuple[pd.Data
         frame["date"] = _utc_timestamp(frame.pop("calc_time"))
         frame = frame.rename(columns={"last_funding_rate": "funding_rate"})
         output_columns = ["date", "funding_interval_hours", "funding_rate"]
+    elif kind == "metrics":
+        required = {"create_time", "sum_open_interest", "sum_open_interest_value"}
+        missing = sorted(required - set(raw.columns))
+        if missing:
+            raise ValueError(f"missing metrics columns: {missing}")
+        keep = ["create_time", "sum_open_interest", "sum_open_interest_value"]
+        optional = [
+            "count_toptrader_long_short_ratio",
+            "sum_toptrader_long_short_ratio",
+            "count_long_short_ratio",
+            "sum_taker_long_short_vol_ratio",
+        ]
+        keep.extend(column for column in optional if column in raw.columns)
+        frame = raw[keep].copy()
+        create_time = frame.pop("create_time")
+        numeric_time = pd.to_numeric(create_time, errors="coerce")
+        if numeric_time.notna().all():
+            frame["date"] = pd.to_datetime(numeric_time, unit="ms", utc=True, errors="coerce")
+        else:
+            frame["date"] = pd.to_datetime(create_time, utc=True, errors="coerce")
+        frame = frame.rename(
+            columns={
+                "sum_open_interest": "open_interest",
+                "sum_open_interest_value": "open_interest_usd",
+            }
+        )
+        output_columns = ["date", "open_interest", "open_interest_usd"] + [
+            column for column in optional if column in frame.columns
+        ]
     else:
         raise ValueError(f"unsupported Binance derivative kind: {kind}")
     for column in output_columns:
@@ -79,7 +108,7 @@ def normalize(path: Path, *, kind: str, pair: str, source: str) -> tuple[pd.Data
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--kind", choices=("indexPriceKlines", "markPriceKlines", "fundingRate"), required=True)
+    parser.add_argument("--kind", choices=("indexPriceKlines", "markPriceKlines", "fundingRate", "metrics"), required=True)
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--pair", required=True)

@@ -3,7 +3,8 @@ from __future__ import annotations
 import pandas as pd
 
 from research.evaluation.cash_carry import CarryAssumptions, evaluate_pair
-from research.evaluation.cross_sectional_portfolio import PortfolioPolicy, build_features, simulate_portfolio
+from research.evaluation.cross_sectional_portfolio import PortfolioPolicy, build_features, simulate_portfolio, tune_portfolio
+from research.evaluation.momentum_reconstruction import MomentumPolicy, simulate as simulate_momentum, tune as tune_momentum
 from research.evaluation.execution_foundation import WalletPolicy, reconcile_fills, simulate_shared_wallet
 from research.evaluation.microstructure import (
     FeeTier,
@@ -94,10 +95,40 @@ def test_carry_accounts_for_two_leg_costs_and_margin_buffer(tmp_path) -> None:
     index = tmp_path / "index.feather"
     base.to_feather(spot)
     pd.DataFrame({"date": dates, "close": [101.0, 100.05, 100.02, 100.01], "margin_buffer": [0.50] * 4}).to_feather(perp)
-    pd.DataFrame({"date": dates, "close": [100.0] * 4}).to_feather(index)
+    pd.DataFrame({"date": dates, "index_close": [100.0] * 4}).to_feather(index)
     pd.DataFrame({"date": dates, "funding_rate": [0.0002] * 4}).to_feather(funding)
     result = evaluate_pair(spot, perp, funding, index, "demo", "demo", round_trip_cost=0.001, assumptions=CarryAssumptions(round_trip_cost=0.001, adverse_basis_shock=0.0, venue_failure_cost=0.0))
     assert result["eligible"] is True
     assert result["entries"] == 1
     assert result["data_coverage"]["margin_buffer"] is True
     assert result["profit_ratio"] > 0
+    assert result["funding_observations_used"] >= 1
+
+
+def test_momentum_reconstruction_is_causal_and_tunable() -> None:
+    dates = pd.date_range("2025-01-01", periods=240, freq="D", tz="UTC")
+    rows = []
+    for pair, drift in (("BTC/USDT", 0.001), ("ETH/USDT", 0.0008), ("SOL/USDT", 0.0005)):
+        for index, date in enumerate(dates):
+            rows.append({"timestamp": date, "pair": pair, "close": 100 * (1 + drift) ** index, "volume": 1000})
+    candles = pd.DataFrame(rows)
+    policy = MomentumPolicy(lookback_days=14, trend_days=20, regime_days=30, top_n=2, exit_rank=3)
+    result = simulate_momentum(candles, policy)
+    assert result["eligible"] is True
+    tuned = tune_momentum(candles, train_end="2025-06-01", holdout_start="2025-06-01", grid=[policy])
+    assert tuned["selected"]["lookback_days"] == 14
+    assert tuned["holdout"]["eligible"] is True
+
+
+def test_cross_sectional_tuner_freezes_a_policy_on_holdout() -> None:
+    dates = pd.date_range("2025-01-01", periods=120, freq="h", tz="UTC")
+    rows = []
+    for pair, drift in (("BTC/USDT", 0.001), ("ETH/USDT", 0.0005), ("SOL/USDT", -0.0002)):
+        for index, date in enumerate(dates):
+            rows.append({"timestamp": date, "pair": pair, "close": 100 * (1 + drift) ** index, "volume": 1000})
+    candles = pd.DataFrame(rows)
+    membership = pd.DataFrame({"effective_at": [dates[0]] * 3, "pair": ["BTC/USDT", "ETH/USDT", "SOL/USDT"]})
+    policy = PortfolioPolicy(lookback=12, volatility_window=12, longs=1, rebalance_every=6)
+    result = tune_portfolio(candles, membership, train_end="2025-01-03", holdout_start="2025-01-03", grid=[policy])
+    assert result["selected"]["lookback"] == 12
+    assert result["holdout"]["eligible"] is True

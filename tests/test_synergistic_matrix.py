@@ -8,6 +8,7 @@ from research.evaluation.synergistic_matrix import (
     MatrixCandidate,
     OverlayPolicy,
     _entry_context,
+    build_matrix,
     data_gated_rows,
     simulate_shared_wallet,
 )
@@ -74,3 +75,24 @@ def test_data_gated_rows_do_not_promote_missing_event_sources(tmp_path: Path) ->
     assert rows[0]["status"] == "blocked"
     assert rows[1]["status"] == "blocked"
     assert rows[2]["status"] == "blocked"
+
+
+def test_matrix_accepts_optional_breakout_and_liquid_momentum_sleeves(tmp_path: Path) -> None:
+    paths = {}
+    for name in ("momentum", "crash", "breakout", "vmt", "rct", "lms"):
+        path = tmp_path / f"{name}.zip"
+        _export(path, [_trade("2025-01-01T00:00:00Z", "2025-01-02T00:00:00Z", 0.01, f"{name}/USDT")])
+        paths[name] = path
+    candidates = [
+        MatrixCandidate("momentum", paths["momentum"], timeframe="15m"),
+        MatrixCandidate("crash", paths["crash"], timeframe="4h"),
+        MatrixCandidate("breakout", paths["breakout"], timeframe="4h"),
+        MatrixCandidate("vmt", paths["vmt"], timeframe="1h"),
+        MatrixCandidate("rct", paths["rct"], timeframe="1h"),
+        MatrixCandidate("lms", paths["lms"], timeframe="4h"),
+    ]
+    result = build_matrix(candidates, data_root=tmp_path, start="2025-01-01", end="2025-01-03")
+    scenarios = {row["scenario"] for row in result["rows"]}
+    assert "core_plus_standalone_breakout" in scenarios
+    assert "core_plus_liquid_momentum" in scenarios
+    assert "extended_all_alpha" in scenarios

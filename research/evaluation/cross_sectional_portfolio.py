@@ -39,6 +39,11 @@ class PortfolioPolicy:
     slippage_bps: float = 5.0
 
 
+def _as_utc(value: str | pd.Timestamp) -> pd.Timestamp:
+    timestamp = pd.Timestamp(value)
+    return timestamp.tz_localize("UTC") if timestamp.tzinfo is None else timestamp.tz_convert("UTC")
+
+
 def build_features(candles: pd.DataFrame, membership: pd.DataFrame, *, policy: PortfolioPolicy = PortfolioPolicy()) -> pd.DataFrame:
     required = {"pair", "close", "volume"}
     if not required.issubset(candles.columns):
@@ -132,6 +137,40 @@ def simulate_portfolio(features: pd.DataFrame, *, policy: PortfolioPolicy = Port
         "max_drawdown_pct": float(drawdown), "mean_turnover": float(np.mean(turnovers)) if turnovers else 0.0,
         "policy": policy.__dict__, "spot_only": spot_only,
     }
+
+
+def tune_portfolio(
+    candles: pd.DataFrame,
+    membership: pd.DataFrame,
+    *,
+    train_end: str,
+    holdout_start: str,
+    grid: list[PortfolioPolicy] | None = None,
+    spot_only: bool = True,
+) -> dict[str, Any]:
+    """Tune a small predeclared grid on the train period, then freeze it."""
+    policies = grid or [
+        PortfolioPolicy(lookback=42, reversal_window=12, volatility_window=42, rebalance_every=6, longs=3),
+        PortfolioPolicy(lookback=84, reversal_window=18, volatility_window=84, rebalance_every=12, longs=3),
+        PortfolioPolicy(lookback=126, reversal_window=24, volatility_window=126, rebalance_every=24, longs=2),
+        PortfolioPolicy(lookback=168, reversal_window=24, volatility_window=168, rebalance_every=42, longs=2),
+    ]
+    train_cut = _as_utc(train_end)
+    holdout_cut = _as_utc(holdout_start)
+    candidates: list[dict[str, Any]] = []
+    for policy in policies:
+        features = build_features(candles, membership, policy=policy)
+        train_features = features[features["timestamp"] < train_cut]
+        train = simulate_portfolio(train_features, policy=policy, spot_only=spot_only)
+        score = float(train.get("profit_pct", -np.inf)) - 0.5 * float(train.get("max_drawdown_pct", 100.0)) if train.get("eligible") else -np.inf
+        candidates.append({"policy": policy.__dict__, "train": train, "score": score})
+    selected = max(candidates, key=lambda item: item["score"])
+    policy = PortfolioPolicy(**selected["policy"])
+    features = build_features(candles, membership, policy=policy)
+    holdout_features = features[features["timestamp"] >= holdout_cut]
+    holdout = simulate_portfolio(holdout_features, policy=policy, spot_only=spot_only)
+    return {"selected": selected["policy"], "selection_rule": "train profit minus 0.5x drawdown; frozen holdout",
+            "candidates": candidates, "holdout": holdout}
 
 
 def main() -> int:

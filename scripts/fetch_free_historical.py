@@ -109,6 +109,8 @@ def binance_plan(args: argparse.Namespace) -> FetchPlan:
     else:
         root = f"https://data.binance.vision/data/futures/{args.futures_market}"
     dataset = args.dataset
+    if dataset == "metrics" and (not args.date or args.month):
+        raise ValueError("Binance metrics archives require --date and do not support --month")
     if args.month:
         period = parse_month(args.month)
         period_path = f"monthly/{dataset}/{symbol}"
@@ -419,7 +421,7 @@ def build_parser() -> argparse.ArgumentParser:
     binance.add_argument("--futures-market", choices=("um", "cm"), default="um")
     binance.add_argument(
         "--dataset",
-        choices=("klines", "indexPriceKlines", "markPriceKlines", "fundingRate", "aggTrades", "trades"),
+        choices=("klines", "indexPriceKlines", "markPriceKlines", "fundingRate", "metrics", "aggTrades", "trades"),
         required=True,
     )
     binance.add_argument("--symbol", required=True)

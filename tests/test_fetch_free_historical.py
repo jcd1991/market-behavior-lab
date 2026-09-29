@@ -46,6 +46,22 @@ def test_binance_spot_and_futures_local_names_are_distinct() -> None:
     assert futures.url.endswith("/futures/um/monthly/klines/BTCUSDT/1m/BTCUSDT-1m-2026-08.zip")
 
 
+def test_binance_daily_metrics_url() -> None:
+    plan = binance_plan(
+        namespace(
+            symbol="BTCUSDT",
+            market_type="futures",
+            futures_market="um",
+            dataset="metrics",
+            interval=None,
+            month=None,
+            date="2026-08-01",
+        )
+    )
+    assert plan.url.endswith("/futures/um/daily/metrics/BTCUSDT/BTCUSDT-metrics-2026-08-01.zip")
+    assert plan.output_name == "um-BTCUSDT-metrics-2026-08-01.zip"
+
+
 def test_bitmex_public_archive_url() -> None:
     plan = bitmex_plan(namespace(dataset="quote", date="2015-01-01"))
     assert plan.url.endswith("/data/quote/20150101.csv.gz")

@@ -40,8 +40,8 @@ def add_basis_oi_features(
         merged = pd.merge_asof(left, src, on="date", direction="backward")
         return pd.to_numeric(merged[name], errors="coerce").set_axis(out.index)
 
-    mark_close = merge_value(mark, "mark_close", ("close", "mark_price", "mark"))
-    index_close = merge_value(index, "index_close", ("close", "index_price", "index"))
+    mark_close = merge_value(mark, "mark_close", ("close", "mark_close", "mark_price", "mark"))
+    index_close = merge_value(index, "index_close", ("close", "index_close", "index_price", "index"))
     oi_value = merge_value(
         open_interest,
         "open_interest",
@@ -50,7 +50,7 @@ def add_basis_oi_features(
     out["mark_close"] = mark_close
     out["index_close"] = index_close
     out["basis"] = ((mark_close - index_close) / index_close.replace(0, pd.NA)).astype(float)
-    out["oi_change_pct"] = oi_value.pct_change()
+    out["oi_change_pct"] = oi_value.pct_change(fill_method=None)
     price_change = close.pct_change()
     out["basis_oi_trend_long"] = (price_change > 0) & (out["oi_change_pct"] > 0)
     out["basis_oi_trend_short"] = (price_change < 0) & (out["oi_change_pct"] > 0)

@@ -11,15 +11,157 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
 
 
 def load_ohlcv(path: Path) -> pd.DataFrame:
-    frame = pd.read_feather(path)
+    frame = pd.read_parquet(path) if path.suffix == ".parquet" else pd.read_feather(path)
     frame["date"] = pd.to_datetime(frame["date"], utc=True, errors="coerce")
     return frame.dropna(subset=["date"]).sort_values("date").drop_duplicates("date").set_index("date")
+
+
+def _manifest(path: Path) -> dict[str, Any] | None:
+    manifest_path = Path(f"{path}.manifest.json")
+    if not manifest_path.is_file():
+        return None
+    try:
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _manifest_venue(manifest: dict[str, Any] | None) -> str | None:
+    if not manifest:
+        return None
+    if manifest.get("venue"):
+        return str(manifest["venue"]).lower()
+    source = str(manifest.get("source", "")).lower()
+    for candidate in ("binance-global", "binanceus", "coinbase", "okx", "kraken"):
+        if candidate in source:
+            return candidate
+    return None
+
+
+def audit_two_leg_inputs(
+    asset_path: Path,
+    reference_path: Path,
+    asset_venue: str,
+    reference_venue: str,
+    *,
+    min_overlap_days: float = 90.0,
+    require_explicit_provenance: bool = True,
+    require_shortable_reference: bool = True,
+) -> dict[str, Any]:
+    """Gate a residual pair before it is treated as a hedged result.
+
+    A residual signal is not market-neutral when one leg cannot actually be
+    shorted.  The strict gate therefore requires same-venue metadata, a
+    shortable reference market (normally futures/perpetual), distinct pairs,
+    and a meaningful overlapping history.
+    """
+
+    requirements = {
+        "min_overlap_days": min_overlap_days,
+        "require_explicit_provenance": require_explicit_provenance,
+        "require_shortable_reference": require_shortable_reference,
+    }
+    missing = [
+        name
+        for name, path in (("asset", asset_path), ("reference", reference_path))
+        if not path.is_file()
+    ]
+    if missing:
+        return {"eligible": False, "reason": "missing_input", "missing": missing, "requirements": requirements}
+    if asset_venue.lower() != reference_venue.lower():
+        return {
+            "eligible": False,
+            "reason": "venue_mismatch",
+            "asset_venue": asset_venue,
+            "reference_venue": reference_venue,
+            "requirements": requirements,
+        }
+
+    asset_manifest = _manifest(asset_path)
+    reference_manifest = _manifest(reference_path)
+    observed_asset_venue = _manifest_venue(asset_manifest)
+    observed_reference_venue = _manifest_venue(reference_manifest)
+    failures: list[str] = []
+    if require_explicit_provenance and observed_asset_venue is None:
+        failures.append("asset_venue_provenance_missing")
+    if require_explicit_provenance and observed_reference_venue is None:
+        failures.append("reference_venue_provenance_missing")
+    if observed_asset_venue and observed_asset_venue != asset_venue.lower():
+        failures.append("asset_venue_mismatch")
+    if observed_reference_venue and observed_reference_venue != reference_venue.lower():
+        failures.append("reference_venue_mismatch")
+
+    asset_pair = asset_manifest.get("pair") if asset_manifest else None
+    reference_pair = reference_manifest.get("pair") if reference_manifest else None
+    if asset_pair and reference_pair and asset_pair == reference_pair:
+        failures.append("legs_are_not_distinct")
+
+    asset_market = str(asset_manifest.get("market_type", "")) if asset_manifest else ""
+    reference_market = str(reference_manifest.get("market_type", "")) if reference_manifest else ""
+    if require_shortable_reference and reference_market.lower() not in {"futures", "perpetual", "swap"}:
+        failures.append("reference_leg_not_marked_shortable")
+
+    asset = load_ohlcv(asset_path)
+    reference = load_ohlcv(reference_path)
+    overlap_start = max(asset.index.min(), reference.index.min())
+    overlap_end = min(asset.index.max(), reference.index.max())
+    overlap_days = max(0.0, (overlap_end - overlap_start).total_seconds() / 86400.0)
+    if overlap_days < min_overlap_days:
+        failures.append("overlap_too_short")
+    overlap_rows = int(
+        pd.concat(
+            [asset.loc[overlap_start:overlap_end, "close"], reference.loc[overlap_start:overlap_end, "close"]],
+            axis=1,
+        ).dropna().shape[0]
+    )
+    return {
+        "eligible": not failures,
+        "reason": "ok" if not failures else "hedge_contract_failed",
+        "failures": failures,
+        "requirements": requirements,
+        "asset_venue": asset_venue,
+        "reference_venue": reference_venue,
+        "legs": {
+            "asset": {"pair": asset_pair, "market_type": asset_market, "rows": int(len(asset)), "venue": observed_asset_venue},
+            "reference": {"pair": reference_pair, "market_type": reference_market, "rows": int(len(reference)), "venue": observed_reference_venue},
+        },
+        "coverage": {
+            "overlap_start": overlap_start,
+            "overlap_end": overlap_end,
+            "overlap_days": overlap_days,
+            "overlap_rows": overlap_rows,
+        },
+    }
+
+
+def simulate_pair_from_paths(
+    asset_path: Path,
+    reference_path: Path,
+    *,
+    asset_venue: str,
+    reference_venue: str,
+    strict_contract: bool = True,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Run the two-leg simulator only after the optional contract gate."""
+
+    if strict_contract:
+        audit = audit_two_leg_inputs(asset_path, reference_path, asset_venue, reference_venue)
+        if not audit["eligible"]:
+            return audit
+    result = simulate_pair(load_ohlcv(asset_path), load_ohlcv(reference_path), venue=asset_venue, **kwargs)
+    result["contract"] = "same-venue-two-leg-residual.v1"
+    result["asset_path"] = str(asset_path)
+    result["reference_path"] = str(reference_path)
+    return result
 
 
 def _features(joined: pd.DataFrame, window: int) -> pd.DataFrame:
@@ -137,6 +279,9 @@ def main() -> None:
     parser.add_argument("--asset", type=Path, required=True)
     parser.add_argument("--reference", type=Path, required=True)
     parser.add_argument("--venue", required=True)
+    parser.add_argument("--asset-venue")
+    parser.add_argument("--reference-venue")
+    parser.add_argument("--strict-contract", action="store_true")
     parser.add_argument("--window", type=int, default=240)
     parser.add_argument("--entry-z", type=float, default=1.8)
     parser.add_argument("--exit-z", type=float, default=0.35)
@@ -145,17 +290,32 @@ def main() -> None:
     parser.add_argument("--round-trip-cost", type=float, default=0.002)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    result = simulate_pair(
-        load_ohlcv(args.asset),
-        load_ohlcv(args.reference),
-        venue=args.venue,
-        window=args.window,
-        entry_z=args.entry_z,
-        exit_z=args.exit_z,
-        min_corr=args.min_corr,
-        max_half_life=args.max_half_life,
-        round_trip_cost=args.round_trip_cost,
-    )
+    if args.strict_contract:
+        result = simulate_pair_from_paths(
+            args.asset,
+            args.reference,
+            asset_venue=args.asset_venue or args.venue,
+            reference_venue=args.reference_venue or args.venue,
+            strict_contract=True,
+            window=args.window,
+            entry_z=args.entry_z,
+            exit_z=args.exit_z,
+            min_corr=args.min_corr,
+            max_half_life=args.max_half_life,
+            round_trip_cost=args.round_trip_cost,
+        )
+    else:
+        result = simulate_pair(
+            load_ohlcv(args.asset),
+            load_ohlcv(args.reference),
+            venue=args.venue,
+            window=args.window,
+            entry_z=args.entry_z,
+            exit_z=args.exit_z,
+            min_corr=args.min_corr,
+            max_half_life=args.max_half_life,
+            round_trip_cost=args.round_trip_cost,
+        )
     rendered = json.dumps(result, indent=2, sort_keys=True)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)

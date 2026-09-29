@@ -8,10 +8,11 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "user_data" / "strategies"))
 
-from research.evaluation.cash_carry import evaluate_pair
-from research.evaluation.cointegration_book import simulate_pair
+from research.evaluation.cash_carry import audit_same_venue_inputs, evaluate_pair
+from research.evaluation.cointegration_book import audit_two_leg_inputs, simulate_pair
 from research_strategy_helpers import execution_cost_floor, quote_volume_features
 from user_data.strategies.MarketNeutralCointegrationBook import MarketNeutralCointegrationBook
+from user_data.strategies.MomentumRegimeBasket15m import MomentumRegimeBasket15m, MomentumRegimeBasket15mLb30
 from user_data.strategies.RiskManagedCrossSectionalTrend import RiskManagedCrossSectionalTrend
 from user_data.strategies.RiskManagedCrossSectionalTrend import RiskManagedCrossSectionalTrendSpot
 from user_data.strategies.VolatilityManagedTrendCash import VolatilityManagedTrendCash, VolatilityManagedTrendCashSpot
@@ -28,6 +29,9 @@ def test_new_strategy_contracts_are_explicit():
     assert RiskManagedCrossSectionalTrendSpot.can_short is False
     assert VolatilityManagedTrendCash.stoploss < 0
     assert VolatilityManagedTrendCashSpot.can_short is False
+    assert MomentumRegimeBasket15m.timeframe == "15m"
+    assert MomentumRegimeBasket15m.can_short is False
+    assert MomentumRegimeBasket15mLb30.MOM_LOOKBACK_DAYS == 30
 
 
 def test_execution_cost_and_liquidity_filters_are_causal():
@@ -62,6 +66,46 @@ def test_cash_carry_contract_uses_utc_and_costs(tmp_path: Path):
     assert result["eligible"] is True
     assert result["observations"] == 5
     assert result["round_trip_cost"] == 0.002
+
+
+def test_strict_cash_carry_gate_requires_long_history_and_margin_data(tmp_path: Path):
+    dates = pd.date_range("2025-01-01", periods=5, freq="h", tz="UTC")
+    paths = {
+        "spot": tmp_path / "spot.feather",
+        "perp": tmp_path / "perp.feather",
+        "funding": tmp_path / "funding.feather",
+        "index": tmp_path / "index.feather",
+    }
+    for name, path in paths.items():
+        values = [100.0] * len(dates)
+        if name == "funding":
+            _write_frame(path, dates, values, funding_rate=[0.001] * len(dates))
+        else:
+            _write_frame(path, dates, values)
+        path.with_name(path.name + ".manifest.json").write_text(
+            json.dumps({"venue": "okx", "source": "okx-test", "pair": "BTC/USDT"}),
+            encoding="utf-8",
+        )
+    result = audit_same_venue_inputs(**paths, venue="okx")
+    assert result["eligible"] is False
+    assert "overlap_too_short" in result["failures"]
+    assert "margin_buffer_missing" in result["failures"]
+
+
+def test_two_leg_contract_requires_shortable_same_venue_reference(tmp_path: Path):
+    dates = pd.date_range("2025-01-01", periods=100, freq="h", tz="UTC")
+    asset = tmp_path / "asset.feather"
+    reference = tmp_path / "reference.feather"
+    _write_frame(asset, dates, np.linspace(100.0, 110.0, len(dates)))
+    _write_frame(reference, dates, np.linspace(100.0, 109.0, len(dates)))
+    for path, pair in ((asset, "ETH/USDT"), (reference, "BTC/USDT")):
+        path.with_name(path.name + ".manifest.json").write_text(
+            json.dumps({"venue": "okx", "source": "okx-test", "pair": pair, "market_type": "spot"}),
+            encoding="utf-8",
+        )
+    result = audit_two_leg_inputs(asset, reference, "okx", "okx", min_overlap_days=1)
+    assert result["eligible"] is False
+    assert "reference_leg_not_marked_shortable" in result["failures"]
 
 
 def test_cointegration_book_opens_two_leg_causal_positions():

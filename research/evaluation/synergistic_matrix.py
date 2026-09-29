@@ -327,13 +327,29 @@ def data_gated_rows(data_root: Path) -> list[dict[str, Any]]:
         "derivative_artifacts_seen": len(derivative_files),
     }
     binance_root = data_root / "historical" / "normalized" / "binance-global"
-    carry_paths = {
-        "spot": binance_root / "BTC_USDT-1m-2026-08.feather",
-        "perp": binance_root / "BTC_USDT_USDT-1m-futures-2026-08.feather",
-        "index": binance_root / "BTC_USDT_USDT-index-1m-2026-08.feather",
-        "funding": binance_root / "BTC_USDT_USDT-funding-2026-08.feather",
-    }
-    if all(path.is_file() for path in carry_paths.values()):
+    carry_paths: dict[str, Path] | None = None
+    candidate_roots = sorted(binance_root.glob("acquisition-*"), reverse=True) + [binance_root]
+    for carry_root in candidate_roots:
+        names = (
+            {
+                "spot": "BTC_USDT-1m.feather",
+                "perp": "BTC_USDT_USDT-1m-futures.feather",
+                "index": "BTC_USDT_USDT-index-1m.feather",
+                "funding": "BTC_USDT_USDT-funding.feather",
+            }
+            if carry_root != binance_root
+            else {
+                "spot": "BTC_USDT-1m-2026-08.feather",
+                "perp": "BTC_USDT_USDT-1m-futures-2026-08.feather",
+                "index": "BTC_USDT_USDT-index-1m-2026-08.feather",
+                "funding": "BTC_USDT_USDT-funding-2026-08.feather",
+            }
+        )
+        candidate = {key: carry_root / name for key, name in names.items()}
+        if all(path.is_file() for path in candidate.values()):
+            carry_paths = candidate
+            break
+    if carry_paths:
         carry_result = evaluate_carry_contract(
             pd.read_feather(carry_paths["spot"]),
             pd.read_feather(carry_paths["perp"]),
@@ -348,8 +364,8 @@ def data_gated_rows(data_root: Path) -> list[dict[str, Any]]:
         carry = {
             **carry,
             "status": "screened_not_promoted",
-            "reason": "one-month same-venue public archive screen; no borrow, collateral, open-interest, liquidation-buffer, or execution-truth history",
-            "data_window": "2026-08-01/2026-08-31",
+            "reason": "same-venue public archive screen; no borrow, collateral, liquidation-buffer, or execution-truth history",
+            "data_window": f"{pd.to_datetime(pd.read_feather(carry_paths['spot'])['date'], utc=True).min().date()}/{pd.to_datetime(pd.read_feather(carry_paths['spot'])['date'], utc=True).max().date()}",
             "result": carry_result,
         }
     return [
@@ -389,7 +405,14 @@ def build_matrix(
         ("core_momentum_crash", {"momentum": 0.70, "crash": 0.30}, OverlayPolicy()),
         ("core_plus_volatility_cash", {"momentum": 0.60, "crash": 0.25, "vmt": 0.15}, OverlayPolicy()),
         ("core_plus_cross_sectional", {"momentum": 0.60, "crash": 0.25, "rct": 0.15}, OverlayPolicy()),
+        ("core_plus_standalone_breakout", {"momentum": 0.70, "breakout": 0.30}, OverlayPolicy()),
+        ("core_plus_liquid_momentum", {"momentum": 0.70, "lms": 0.30}, OverlayPolicy()),
         ("all_alpha", {"momentum": 0.50, "crash": 0.25, "vmt": 0.15, "rct": 0.10}, OverlayPolicy()),
+        (
+            "extended_all_alpha",
+            {"momentum": 0.45, "crash": 0.20, "breakout": 0.15, "vmt": 0.10, "rct": 0.05, "lms": 0.05},
+            OverlayPolicy(),
+        ),
         (
             "all_alpha_liquidity_gate",
             {"momentum": 0.50, "crash": 0.25, "vmt": 0.15, "rct": 0.10},
@@ -461,7 +484,13 @@ def tune_matrix(
         ("core", {"momentum": 0.70, "crash": 0.30}),
         ("core_plus_vmt", {"momentum": 0.60, "crash": 0.25, "vmt": 0.15}),
         ("core_plus_rct", {"momentum": 0.60, "crash": 0.25, "rct": 0.15}),
+        ("core_plus_breakout", {"momentum": 0.70, "breakout": 0.30}),
+        ("core_plus_lms", {"momentum": 0.70, "lms": 0.30}),
         ("all_alpha", {"momentum": 0.50, "crash": 0.25, "vmt": 0.15, "rct": 0.10}),
+        (
+            "extended_all_alpha",
+            {"momentum": 0.45, "crash": 0.20, "breakout": 0.15, "vmt": 0.10, "rct": 0.05, "lms": 0.05},
+        ),
     ]
     liquidity_grid: list[tuple[str, float | None, float | None]] = [
         ("none", None, None),
@@ -573,6 +602,8 @@ def main() -> int:
     parser.add_argument("--crash", type=Path, required=True)
     parser.add_argument("--vmt", type=Path)
     parser.add_argument("--rct", type=Path)
+    parser.add_argument("--breakout", type=Path)
+    parser.add_argument("--lms", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--extra-round-trip-cost", type=float, default=0.002)
     parser.add_argument("--tune-train-start")
@@ -591,6 +622,10 @@ def main() -> int:
         candidates.append(MatrixCandidate("vmt", args.vmt, timeframe="1h"))
     if args.rct:
         candidates.append(MatrixCandidate("rct", args.rct, timeframe="1h"))
+    if args.breakout:
+        candidates.append(MatrixCandidate("breakout", args.breakout, timeframe="4h"))
+    if args.lms:
+        candidates.append(MatrixCandidate("lms", args.lms, timeframe="4h"))
     # Matrix compatibility is about venue/market, not timeframe, so the
     # scenario runner uses its own explicit candidate set and allows these
     # alpha clocks to compete for one wallet.

@@ -2,6 +2,7 @@ from pathlib import Path
 import zipfile
 
 from scripts.normalize_binance_derivatives import normalize
+from scripts.normalize_binance_metrics_series import normalize_series
 
 
 def _zip(path: Path, name: str, text: str) -> None:
@@ -29,3 +30,52 @@ def test_normalizes_binance_funding_archive(tmp_path: Path) -> None:
     assert frame.iloc[0]["funding_rate"] == 0.0001
     assert frame.iloc[0]["funding_interval_hours"] == 8
     assert manifest["venue_mixing"] == "forbidden"
+
+
+def test_normalizes_binance_metrics_archive(tmp_path: Path) -> None:
+    archive = tmp_path / "metrics.zip"
+    _zip(
+        archive,
+        "BTCUSDT-metrics-2026-08-01.csv",
+        "create_time,symbol,sum_open_interest,sum_open_interest_value,count_toptrader_long_short_ratio\n"
+        "1754006400000,BTCUSDT,123.4,9876543.21,1.2\n",
+    )
+    frame, manifest = normalize(
+        archive,
+        kind="metrics",
+        pair="BTC/USDT:USDT",
+        source="binance-global-public-archive",
+    )
+    assert frame.iloc[0]["open_interest"] == 123.4
+    assert frame.iloc[0]["open_interest_usd"] == 9876543.21
+    assert frame.iloc[0]["count_toptrader_long_short_ratio"] == 1.2
+    assert manifest["kind"] == "metrics"
+
+
+def test_combines_binance_metrics_series(tmp_path: Path) -> None:
+    for day, timestamp in (("01", "1754006400000"), ("02", "1754092800000")):
+        _zip(
+            tmp_path / f"um-BTCUSDT-metrics-2026-08-{day}.zip",
+            f"BTCUSDT-metrics-2026-08-{day}.csv",
+            "create_time,symbol,sum_open_interest,sum_open_interest_value\n"
+            f"{timestamp},BTCUSDT,123.4,9876543.21\n",
+        )
+    frame, manifest = normalize_series(
+        sorted(tmp_path.glob("*.zip")),
+        pair="BTC/USDT:USDT",
+        source="binance-global-public-archive",
+    )
+    assert len(frame) == 2
+    assert manifest["input_count"] == 2
+
+
+def test_normalizes_binance_metrics_string_timestamp(tmp_path: Path) -> None:
+    archive = tmp_path / "metrics-string.zip"
+    _zip(
+        archive,
+        "BTCUSDT-metrics-2026-08-01.csv",
+        "create_time,symbol,sum_open_interest,sum_open_interest_value\n"
+        "2026-08-01 03:10:00,BTCUSDT,123.4,9876543.21\n",
+    )
+    frame, _ = normalize(archive, kind="metrics", pair="BTC/USDT:USDT", source="test")
+    assert str(frame.iloc[0]["date"]) == "2026-08-01 03:10:00+00:00"
