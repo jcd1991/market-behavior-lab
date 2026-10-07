@@ -1,6 +1,8 @@
 from pathlib import Path
 import zipfile
 
+import pandas as pd
+
 from scripts.normalize_binance_derivatives import normalize
 from scripts.normalize_binance_metrics_series import normalize_series
 
@@ -79,3 +81,22 @@ def test_normalizes_binance_metrics_string_timestamp(tmp_path: Path) -> None:
     )
     frame, _ = normalize(archive, kind="metrics", pair="BTC/USDT:USDT", source="test")
     assert str(frame.iloc[0]["date"]) == "2026-08-01 03:10:00+00:00"
+    assert frame.iloc[0]["available_at"] is pd.NaT
+
+
+def test_metrics_availability_handles_start_and_end_labeled_files(tmp_path: Path) -> None:
+    old = tmp_path / "um-BTCUSDT-metrics-2026-06-24.zip"
+    new = tmp_path / "um-BTCUSDT-metrics-2026-06-25.zip"
+    header = "create_time,symbol,sum_open_interest,sum_open_interest_value\n"
+    old_times = pd.date_range("2026-06-24 00:05:00", periods=288, freq="5min", tz="UTC")
+    new_times = pd.date_range("2026-06-25 00:00:00", periods=288, freq="5min", tz="UTC")
+    old_rows = "".join(f"{stamp.strftime('%Y-%m-%d %H:%M:%S')},BTCUSDT,1,2\n" for stamp in old_times)
+    new_rows = "".join(f"{stamp.strftime('%Y-%m-%d %H:%M:%S')},BTCUSDT,3,4\n" for stamp in new_times)
+    _zip(old, "BTCUSDT-metrics-2026-06-24.csv", header + old_rows)
+    _zip(new, "BTCUSDT-metrics-2026-06-25.csv", header + new_rows)
+    old_frame, old_manifest = normalize(old, kind="metrics", pair="BTC/USDT:USDT", source="test")
+    new_frame, new_manifest = normalize(new, kind="metrics", pair="BTC/USDT:USDT", source="test")
+    assert old_manifest["metrics_label_convention"] == "end_labeled"
+    assert new_manifest["metrics_label_convention"] == "start_labeled"
+    assert old_frame.iloc[0]["available_at"] == old_frame.iloc[0]["date"]
+    assert new_frame.iloc[0]["available_at"] == new_frame.iloc[0]["date"] + pd.Timedelta(minutes=5)

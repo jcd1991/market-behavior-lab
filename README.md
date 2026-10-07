@@ -132,6 +132,13 @@ report](docs/hedged-profit-lanes-2026-09-28.md). It adds strict same-venue
 cash-and-carry and true two-leg residual-hedging audits, while keeping
 incomplete history fail-closed.
 
+The latest portability gate is documented in the [native OKX portability
+report](docs/portability-gate-2026-10-07.md). It replays the frozen slower
+cross-sectional portfolio and a shared slow-breakout/volatility wallet on
+synchronized OKX spot candles without retuning. The cross-sectional policy did
+not transfer in that screen; the breakout/volatility combination remained a
+small, cost-sensitive research lead rather than a portable profitability claim.
+
 ## Strategy catalogue
 
 | Strategy | Timeframe | Side | Role |

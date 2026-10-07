@@ -30,6 +30,36 @@ def _utc_timestamp(values: pd.Series) -> pd.Series:
     return pd.to_datetime(numeric, unit="ms", utc=True, errors="coerce")
 
 
+def _metrics_availability(labels: pd.Series) -> tuple[pd.Series, str]:
+    """Return the earliest safe use time for Binance metrics rows.
+
+    Binance's UM metrics archive changed its label convention on 2026-06-25:
+    older files use end-of-period labels while newer files use start-of-period
+    labels.  The latter contain the observation for the following five-minute
+    interval, so using them at ``create_time`` leaks five minutes of future
+    information.  A file whose convention cannot be identified fails closed
+    with ``NaT`` availability values; callers may still inspect the raw label
+    in ``date``.
+    """
+
+    stamps = pd.to_datetime(labels, utc=True, errors="coerce")
+    valid = stamps.dropna().sort_values()
+    if len(valid) < 2:
+        return pd.Series(pd.NaT, index=labels.index, dtype="datetime64[ns, UTC]"), "ambiguous"
+    first = valid.iloc[0]
+    last = valid.iloc[-1]
+    span = last - first
+    expected_rows = int(round(span.total_seconds() / 300.0)) + 1
+    is_regular = len(valid) == expected_rows and valid.diff().dropna().eq(pd.Timedelta(minutes=5)).all()
+    if not is_regular:
+        return pd.Series(pd.NaT, index=labels.index, dtype="datetime64[ns, UTC]"), "ambiguous"
+    if first.minute == 5 and last.minute == 0 and last.date() != first.date():
+        return stamps, "end_labeled"
+    if first.minute == 0 and last.minute == 55 and last.date() == first.date():
+        return stamps + pd.Timedelta(minutes=5), "start_labeled"
+    return pd.Series(pd.NaT, index=labels.index, dtype="datetime64[ns, UTC]"), "ambiguous"
+
+
 def normalize(path: Path, *, kind: str, pair: str, source: str) -> tuple[pd.DataFrame, dict[str, object]]:
     raw = pd.read_csv(BytesIO(_csv_bytes(path)))
     if kind in {"indexPriceKlines", "markPriceKlines"}:
@@ -71,21 +101,23 @@ def normalize(path: Path, *, kind: str, pair: str, source: str) -> tuple[pd.Data
             frame["date"] = pd.to_datetime(numeric_time, unit="ms", utc=True, errors="coerce")
         else:
             frame["date"] = pd.to_datetime(create_time, utc=True, errors="coerce")
+        frame["available_at"], label_convention = _metrics_availability(frame["date"])
         frame = frame.rename(
             columns={
                 "sum_open_interest": "open_interest",
                 "sum_open_interest_value": "open_interest_usd",
             }
         )
-        output_columns = ["date", "open_interest", "open_interest_usd"] + [
+        output_columns = ["date", "available_at", "open_interest", "open_interest_usd"] + [
             column for column in optional if column in frame.columns
         ]
     else:
         raise ValueError(f"unsupported Binance derivative kind: {kind}")
     for column in output_columns:
-        if column != "date":
+        if column not in {"date", "available_at"}:
             frame[column] = pd.to_numeric(frame[column], errors="coerce")
-    frame = frame.dropna(subset=output_columns).sort_values("date").drop_duplicates("date").reset_index(drop=True)
+    required_columns = [column for column in output_columns if column != "available_at"]
+    frame = frame.dropna(subset=required_columns).sort_values("date").drop_duplicates("date").reset_index(drop=True)
     if frame.empty:
         raise ValueError(f"no valid rows in {path}")
     manifest = {
@@ -103,6 +135,10 @@ def normalize(path: Path, *, kind: str, pair: str, source: str) -> tuple[pd.Data
         "timestamps": "UTC",
         "venue_mixing": "forbidden",
     }
+    if kind == "metrics":
+        manifest["metrics_label_convention"] = label_convention
+        manifest["point_in_time_status"] = "safe" if label_convention != "ambiguous" else "ambiguous"
+        manifest["availability_rule"] = "end_labeled=label; start_labeled=label+5m; ambiguous=NaT"
     return frame[output_columns], manifest
 
 

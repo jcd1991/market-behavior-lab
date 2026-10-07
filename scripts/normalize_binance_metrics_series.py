@@ -28,15 +28,15 @@ def normalize_series(
     if not inputs:
         raise ValueError("no Binance metrics archives found")
     frames: list[pd.DataFrame] = []
+    conventions: list[str] = []
     for path in sorted(inputs):
-        frame, _ = normalize(path, kind="metrics", pair=pair, source=source)
+        frame, manifest = normalize(path, kind="metrics", pair=pair, source=source)
         frames.append(frame)
-    combined = (
-        pd.concat(frames, ignore_index=True)
-        .sort_values("date")
-        .drop_duplicates("date")
-        .reset_index(drop=True)
-    )
+        conventions.append(str(manifest.get("metrics_label_convention", "ambiguous")))
+    combined = pd.concat(frames, ignore_index=True).sort_values(["date", "available_at"])
+    if combined["available_at"].notna().all():
+        combined = combined.drop_duplicates("available_at", keep="last")
+    combined = combined.reset_index(drop=True)
     if combined.empty:
         raise ValueError("metrics archives contained no valid rows")
     columns = list(combined.columns)
@@ -56,6 +56,13 @@ def normalize_series(
         "columns": columns,
         "timestamps": "UTC",
         "venue_mixing": "forbidden",
+        "metrics_label_conventions": sorted(set(conventions)),
+        "point_in_time_status": (
+            "safe"
+            if combined.get("available_at", pd.Series(dtype=object)).notna().all()
+            else "ambiguous"
+        ),
+        "availability_rule": "end_labeled=label; start_labeled=label+5m; ambiguous=NaT",
     }
     return combined[columns], manifest
 

@@ -80,10 +80,13 @@ def evaluate_frozen_sleeves(
     for name in weights:
         rows = [row for row in accepted if row["sleeve"] == name]
         by_sleeve[name] = {"weight": weights[name] / total, "accepted": len(rows), "profit_abs": sum(row["stake"] * (row["profit_ratio"] - cost) for row in rows)}
+    equity = pd.Series([starting_balance] + [starting_balance + sum(row["stake"] * (row["profit_ratio"] - cost) for row in accepted[:index]) for index in range(1, len(accepted) + 1)], dtype=float)
+    max_drawdown = float(-(equity / equity.cummax() - 1.0).min() * 100.0) if not equity.empty else 0.0
     return {
         "schema_version": "frozen-ensemble.v1", "starting_balance": starting_balance,
         "final_balance": balance, "profit_abs": balance - starting_balance,
         "profit_pct": (balance / starting_balance - 1.0) * 100.0,
+        "max_drawdown_pct": max_drawdown,
         "accepted": len(accepted), "rejected": sum(rejected.values()), "rejections": rejected,
         "cost_model": {"fee_bps_per_side": fee_bps, "spread_bps_round_trip": spread_bps, "slippage_bps_round_trip": slippage_bps},
         "sleeves": by_sleeve,

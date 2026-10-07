@@ -101,6 +101,8 @@ def test_public_layout_is_present() -> None:
         ROOT / "research/evaluation/revised_sleeves.py",
         ROOT / "research/evaluation/cash_carry.py",
         ROOT / "research/evaluation/cointegration_book.py",
+        ROOT / "research/evaluation/derivatives_momentum.py",
+        ROOT / "scripts/run_free_profitability_research.py",
         ROOT / "scripts/fetch_deribit_option_chain.py",
         ROOT / "docs/revised-profit-sleeves-2026-09-25.md",
         ROOT / "docs/recommended-profit-lanes-2026-09-25.md",
@@ -110,6 +112,10 @@ def test_public_layout_is_present() -> None:
         ROOT / "research/evaluation/portfolio_validation.py",
         ROOT / "tests/test_portfolio_validation.py",
         ROOT / "docs/portfolio-validation-gate-2026-09-26.md",
+        ROOT / "research/evaluation/portability.py",
+        ROOT / "scripts/run_portability_gate.py",
+        ROOT / "tests/test_portability.py",
+        ROOT / "docs/portability-gate-2026-10-07.md",
     ]
     assert all(path.is_file() for path in expected)
 

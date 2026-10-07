@@ -155,7 +155,12 @@ python scripts/normalize_binance_metrics_series.py \
 The free metrics archive is useful for open-interest context and positioning
 features, but it is not a liquidation ledger, margin-history feed, or proof of
 available execution liquidity. It must not be upsampled into minute-level
-truth or used to fabricate a liquidation buffer.
+truth or used to fabricate a liquidation buffer. Binance's UM metrics archive
+also changed from end-labelled to start-labelled rows on 2026-06-25; the
+normalizer records `available_at` and shifts start-labelled rows by five
+minutes so point-in-time joins do not use future observations. See the
+[Binance public-data timestamp issue](https://github.com/binance/binance-public-data/issues/491)
+for the source evidence and remaining archive ambiguity.
 
 OKX funding, mark, index, and open-interest responses can be normalized into
 separate Feather files with `scripts/normalize_okx_derivatives.py`. They are
